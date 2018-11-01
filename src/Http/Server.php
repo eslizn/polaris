@@ -18,11 +18,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 {
 
 	/**
-	 * @var resource
-	 */
-	protected $pid;
-
-	/**
 	 * @var array
 	 */
 	protected $options = [];
@@ -72,6 +67,12 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 				throw new \ErrorException($msg, $code, $code, $file, $line);
 			}
 		}, E_ALL | E_STRICT);
+		parent::__construct($this->options['host'], $this->options['port']);
+		foreach (get_class_methods($this) as $method) {
+			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
+				$this->on($matches[1], [$this, $method]);
+			}
+		}
 	}
 
 	/**
@@ -103,83 +104,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			}
 		}
 		return $total > 1 ? floor($total/2) : $total;
-	}
-
-	/**
-	 * 获取主进程id
-	 *
-	 * @return bool|string
-	 */
-	public function getMasterId()
-	{
-		if (file_exists($this->options['pid_file'])) {
-			return file_get_contents($this->options['pid_file']);
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function start()
-	{
-		$this->pid = fopen($this->options['pid_file'], "c+");
-		if (!$this->pid || !flock($this->pid, LOCK_EX | LOCK_NB)) { //表示程序已启动
-			return false;
-		}
-		parent::__construct($this->options['host'], $this->options['port']);
-		parent::set($this->options);
-		foreach (get_class_methods($this) as $method) {
-			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
-				$this->on($matches[1], [$this, $method]);
-			}
-		}
-		return parent::start();
-	}
-
-	/**
-	 *
-	 */
-	public function restart()
-	{
-		$this->stop();
-		sleep(1);
-		$this->start();
-	}
-
-	/**
-	 * 停止服务
-	 *
-	 * @param int $worker_id
-	 * @param bool $waitEvent
-	 * @return bool
-	 */
-	public function stop($worker_id = -1, $waitEvent = true)
-	{
-		$id = $this->getMasterId();
-		if ($id && posix_kill($id, SIGTERM)) {
-			unlink($this->options['pid_file']);
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 *
-	 */
-	public function onStart()
-	{
-		if (function_exists('cli_set_process_title')) {
-			cli_set_process_title($this->options['name'] . '_master');
-		} else if (function_exists('swoole_set_process_name')) {
-			swoole_set_process_name($this->options['name'] . '_master');
-		} else {
-			trigger_error(__METHOD__ . ' failed. require cli_set_process_title or swoole_set_process_name.');
-		}
-		ftruncate($this->pid, 0);
-		fwrite($this->pid, getmypid());
-		fflush($this->pid);
 	}
 
 	/**
