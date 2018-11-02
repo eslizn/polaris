@@ -32,7 +32,7 @@ class RequestBody extends Body
 			rewind($this->resource);
 			parent::__construct($this->resource);
 		} else {
-			$this->resource = fopen('php://temp', 'w+');
+			$this->resource = fopen('php://memory', 'w+');
 			stream_copy_to_stream(fopen('php://input', 'r'), $this->resource);
 			rewind($this->resource);
 			parent::__construct($this->resource);
@@ -44,7 +44,7 @@ class RequestBody extends Body
 	 */
     public function __destruct()
 	{
-		if ($this->resource) {
+		if (is_resource($this->resource)) {
 			fclose($this->resource);
 		}
 	}
