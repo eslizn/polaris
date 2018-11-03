@@ -111,6 +111,9 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	 */
 	public function onWorkerStart(Server $srv, $id)
 	{
+	    if ($this->taskworker) {
+	        return;
+        }
 		//init router
 		$routes = $this->options['routes'];
 		$router = new Router\Router($this->options['namespace']);
@@ -118,7 +121,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			include $routes;
 		}
 		$this->router = $router;
-
 		//load middlewares
 		if (file_exists($this->options['middlewares'])) {
 			$this->middlewares = array_merge($this->middlewares, include $this->options['middlewares'] ?: []);
