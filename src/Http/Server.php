@@ -50,8 +50,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 		$this->options = array_merge([
 			'name' => basename($workspace),
 			'workspace' => $workspace,
-			'pid_file' => sprintf('/var/run/%s_master.pid', basename($workspace)),
-			'log_file' => sprintf('%s/log/%s.log', $workspace, basename($workspace)),
 			'host' => '127.0.0.1',
 			'port' => 0,
 			'reload_async' => true,
@@ -68,6 +66,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			}
 		}, E_ALL | E_STRICT);
 		parent::__construct($this->options['host'], $this->options['port']);
+        	parent::set($this->options);
 		foreach (get_class_methods($this) as $method) {
 			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
 				$this->on($matches[1], [$this, $method]);
@@ -103,7 +102,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 				pclose($process);
 			}
 		}
-		return $total > 1 ? floor($total/2) : $total;
+		return $total > 1 ? intval($total/2) : $total;
 	}
 
 	/**
