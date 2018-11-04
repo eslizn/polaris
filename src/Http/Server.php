@@ -143,9 +143,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			//response to writer
 			$writer->status($response->getStatusCode());
 			foreach ($response->getHeaders() as $name => $headers) {
-				foreach ($headers as $value) {
-					$writer->header($name, $value);
-				}
+                $writer->header($name, implode('; ', $headers));
 			}
 			if ($response->getBody()->getSize()) {
 				if ($response instanceof Response\FileResponse) {
