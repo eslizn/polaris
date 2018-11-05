@@ -93,104 +93,86 @@ class Cookies implements CookiesInterface
         $this->responseCookies[$name] = array_replace($this->defaults, $value);
     }
 
-    /**
-     * Convert to `Set-Cookie` headers
-     *
-     * @return string[]
-     */
-    public function toHeaders()
+	/**
+	 * @param string $name
+	 * @param array $properties
+	 * @return string
+	 */
+	public static function build($name, $properties = [])
+	{
+		if (is_string($properties)) {
+			$properties = ['value' => $properties];
+		}
+		if (!is_array($properties)) {
+			throw new InvalidArgumentException('properties value must be a array.');
+		}
+		$cookies = [];
+		$cookies[] = urlencode($name) . '=' . (isset($properties['value']) ? $properties['value'] : '');
+		unset($properties['value']);
+		foreach ($properties as $k => $v) {
+			if (in_array($k, ['secure', 'hostonly', 'httponly'])) {
+				if ($v) {
+					$cookies[] = $k;
+				}
+			} else if (in_array($k, ['expires', 'path', 'domain'])) {
+				$cookies[] = $k . '=' . $v;
+			} else {
+				$cookies[] = urlencode($k) . '=' . urlencode($v);
+			}
+		}
+		return implode('; ', $cookies);
+	}
+
+	/**
+	 * parse cookies
+	 *
+	 * like: http_parse_cookie
+	 *
+	 * @param string $cookies
+	 * @param int $flags
+	 * @param array $extras
+	 * @return \stdClass
+	 */
+	public static function parse($cookies, $flags = 0, $extras = [])
     {
-        $headers = [];
-        foreach ($this->responseCookies as $name => $properties) {
-            $headers[] = $this->toHeader($name, $properties);
+        if (is_array($cookies) === true) {
+			$cookies = isset($cookies[0]) ? $cookies[0] : '';
         }
 
-        return $headers;
-    }
-
-    /**
-     * Convert to `Set-Cookie` header
-     *
-     * @param  string $name       Cookie name
-     * @param  array  $properties Cookie properties
-     *
-     * @return string
-     */
-    protected function toHeader($name, array $properties)
-    {
-        $result = urlencode($name) . '=' . urlencode($properties['value']);
-
-        if (isset($properties['domain'])) {
-            $result .= '; domain=' . $properties['domain'];
-        }
-
-        if (isset($properties['path'])) {
-            $result .= '; path=' . $properties['path'];
-        }
-
-        if (isset($properties['expires'])) {
-            if (is_string($properties['expires'])) {
-                $timestamp = strtotime($properties['expires']);
-            } else {
-                $timestamp = (int)$properties['expires'];
-            }
-            if ($timestamp !== 0) {
-                $result .= '; expires=' . gmdate('D, d-M-Y H:i:s e', $timestamp);
-            }
-        }
-
-        if (isset($properties['secure']) && $properties['secure']) {
-            $result .= '; secure';
-        }
-
-        if (isset($properties['hostonly']) && $properties['hostonly']) {
-            $result .= '; HostOnly';
-        }
-
-        if (isset($properties['httponly']) && $properties['httponly']) {
-            $result .= '; HttpOnly';
-        }
-
-        return $result;
-    }
-
-    /**
-     * Parse HTTP request `Cookie:` header and extract
-     * into a PHP associative array.
-     *
-     * @param  string $header The raw HTTP request `Cookie:` header
-     *
-     * @return array Associative array of cookie names and values
-     *
-     * @throws InvalidArgumentException if the cookie data cannot be parsed
-     */
-    public static function parseHeader($header)
-    {
-        if (is_array($header) === true) {
-            $header = isset($header[0]) ? $header[0] : '';
-        }
-
-        if (is_string($header) === false) {
+        if (is_string($cookies) === false) {
             throw new InvalidArgumentException('Cannot parse Cookie data. Header value must be a string.');
         }
 
-        $header = rtrim($header, "\r\n");
-        $pieces = preg_split('@[;]\s*@', $header);
-        $cookies = [];
-
-        foreach ($pieces as $cookie) {
-            $cookie = explode('=', $cookie, 2);
-
-            if (count($cookie) === 2) {
-                $key = urldecode($cookie[0]);
-                $value = urldecode($cookie[1]);
-
-                if (!isset($cookies[$key])) {
-                    $cookies[$key] = $value;
-                }
-            }
-        }
-
-        return $cookies;
+		$parser = new \stdClass();
+		$parser->cookies = [];
+		$parser->extras = [];
+		$cookies = array_filter(array_map('trim', explode(';', $cookies)));
+		if (empty($cookies) || !strpos($cookies[0], '=')) {
+			return $parser;
+		}
+		$options = ['expires', 'path', 'domain', 'secure', 'httponly'];
+		foreach ($cookies as $cookie) {
+			$cookie = explode('=', $cookie, 2);
+			$key = trim($flags & HTTP_COOKIE_PARSE_RAW ? $cookie[0] : urldecode($cookie[0]));
+			if (sizeof($cookie) > 1) {
+				$value = trim($flags & HTTP_COOKIE_PARSE_RAW ? $cookie[1] : urldecode($cookie[1]), " \n\r\t\0\x0B\"");
+			} else {
+				$value = true;
+			}
+			if (in_array($key, $options)) {
+				$parser->$key = $value;
+			} else if (in_array($key, $allowed_extras)) {
+				$parser->extras[$key] = $value;
+			} else {
+				$parser->cookies[$key] = $value;
+			}
+		}
+		if ($flags & HTTP_COOKIE_SECURE) {
+			$parser->secure = true;
+		}
+		if ($flags & HTTP_COOKIE_HTTPONLY) {
+			$parser->httponly = true;
+		}
+		return $parser;
     }
 }

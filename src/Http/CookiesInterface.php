@@ -8,6 +8,10 @@
  */
 namespace Polaris\Http;
 
+defined('HTTP_COOKIE_PARSE_RAW') or define('HTTP_COOKIE_PARSE_RAW', 1);
+defined('HTTP_COOKIE_SECURE ') or define('HTTP_COOKIE_SECURE ', 16);
+defined('HTTP_COOKIE_HTTPONLY') or define('HTTP_COOKIE_HTTPONLY', 32);
+
 /**
  * Cookies Interface
  *
@@ -16,8 +20,30 @@ namespace Polaris\Http;
  */
 interface CookiesInterface
 {
+	/**
+	 * @param string $name
+	 * @param mixed $default
+	 * @return mixed
+	 */
     public function get($name, $default = null);
+
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return mixed
+	 */
     public function set($name, $value);
-    public function toHeaders();
-    public static function parseHeader($header);
+
+	/**
+	 * @param string $name
+	 * @param array $properties
+	 * @return mixed
+	 */
+    public static function build($name, $properties = []);
+
+	/**
+	 * @param string $cookies
+	 * @return array
+	 */
+    public static function parse($cookies, $flags = 0, $extras = []);
 }

@@ -9,6 +9,7 @@ use Polaris\Http\Router\RouterInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Polaris\Http\Cookies;
 
 /**
  * Class Server
@@ -143,7 +144,14 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			//response to writer
 			$writer->status($response->getStatusCode());
 			foreach ($response->getHeaders() as $name => $headers) {
-                $writer->header($name, implode('; ', $headers));
+				if (strcasecmp($name, 'Set-Cookie')) {
+					$writer->header($name, implode(', ', $headers));
+				} else {
+					$cookie = Cookies::parse(implode('; ', $headers));
+					foreach ($cookie->cookies ?: [] as $key => $value) {
+						$writer->cookie($key, $value, $cookie->expires ?: null, $cookie->path ?: '/', $cookie->domain ?: '', $cookie->secure ?: false, $cookie->httponly ?: false);
+					}
+				}
 			}
 			if ($response->getBody()->getSize()) {
 				if ($response instanceof Response\FileResponse) {

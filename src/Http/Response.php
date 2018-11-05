@@ -303,6 +303,23 @@ class Response extends Message implements ResponseInterface
         return $responseWithRedirect;
     }
 
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @param int $expires
+	 * @param string $path
+	 * @param string $domain
+	 * @param bool $secure
+	 * @param bool $httponly
+	 * @return Response
+	 */
+    public function withCookie($name, $value, $expires = 0, $path = '/', $domain = '', $secure = false, $httponly = false)
+	{
+		$clone = clone $this;
+		$clone->headers->add('Set-Cookie', Cookies::build($name, compact('value', 'expires', 'path', 'domain', 'secure', 'httponly')));
+		return $clone;
+	}
+
     /**
      * Json.
      *

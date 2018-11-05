@@ -143,7 +143,7 @@ class Request extends Message implements ServerRequestInterface
         $method = isset($globals['REQUEST_METHOD']) ? $globals['REQUEST_METHOD'] : null;
         $uri = Uri::createFromGlobals($globals);
         $headers = Headers::createFromGlobals($globals);
-        $cookies = Cookies::parseHeader($headers->get('Cookie', []));
+        $cookies = Cookies::parse($headers->get('Cookie', []))->cookies;
         $serverParams = $globals;
         $body = new RequestBody();
         $uploadedFiles = UploadedFile::createFromGlobals($globals);
