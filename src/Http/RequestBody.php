@@ -15,11 +15,6 @@ class RequestBody extends Body
 {
 
 	/**
-	 * @var resource
-	 */
-	private $resource = null;
-
-	/**
 	 * RequestBody constructor.
 	 * @param null $data
 	 */
@@ -27,26 +22,16 @@ class RequestBody extends Body
     {
 		if (!is_null($data)) {
 			//@todo
-			$this->resource = fopen('php://memory','r+');
-			fwrite($this->resource, $data);
-			rewind($this->resource);
-			parent::__construct($this->resource);
+			$resource = fopen('php://memory','r+');
+			fwrite($resource, $data);
+			rewind($resource);
+			parent::__construct($resource);
 		} else {
-			$this->resource = fopen('php://memory', 'w+');
-			stream_copy_to_stream(fopen('php://input', 'r'), $this->resource);
-			rewind($this->resource);
-			parent::__construct($this->resource);
+			$resource = fopen('php://memory', 'w+');
+			stream_copy_to_stream(fopen('php://input', 'r'), $resource);
+			rewind($resource);
+			parent::__construct($resource);
 		}
     }
-
-	/**
-	 *
-	 */
-    public function __destruct()
-	{
-		if (is_resource($this->resource)) {
-			fclose($this->resource);
-		}
-	}
 
 }
