@@ -188,7 +188,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	 * @param \Throwable $e
 	 * @return ResponseInterface
 	 */
-	protected function handleException(\Throwable $e)
+	public function handleException(\Throwable $e)
 	{
 		printf("[%s # %d][%s:%d]%s\n",
 			date('Y-m-d H:i:s'),
