@@ -1,13 +1,13 @@
 <?php
-namespace Polaris\Schedule;
+namespace Polaris\Dispatch;
 
-use Polaris\Schedule\Exceptions\ScheduleException;
+use Polaris\Dispatch\Exceptions\DispatcherException;
 
 /**
- * Trait SchedulerTrait
- * @package Polaris\Schedule
+ * Trait DispatcherTrait
+ * @package Polaris\Dispatch
  */
-trait SchedulerTrait
+trait DispatcherTrait
 {
 
 	/**
@@ -19,7 +19,7 @@ trait SchedulerTrait
 	public function task($data, $worker_id = null, $finish_callback = null)
 	{
 		if (!($this instanceof \Swoole\Server)) {
-			throw new ScheduleException('the scheduler only support swoole server!', -__LINE__);
+			throw new DispatcherException('the dispatcher only support swoole server!', -__LINE__);
 		}
 		if ($this->taskworker) {
 			$this->onTask($this, $this->worker_id, $this->worker_pid, $data);
@@ -54,7 +54,7 @@ trait SchedulerTrait
 			};
 		}
 		if (!is_callable($callable)) {
-			throw new ScheduleException('schedule object must is callable!', -__LINE__);
+			throw new DispatcherException('dispatch object must is callable!', -__LINE__);
 		}
 		\Swoole\Coroutine::create(function () use ($srv, $id, $pid, $callable) {
 			try {

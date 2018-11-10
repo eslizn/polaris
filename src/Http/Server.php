@@ -1,6 +1,7 @@
 <?php
 namespace Polaris\Http;
 
+use Polaris\Commands\ServerInterface;
 use Polaris\Http\Middleware\CallableHandler;
 use Polaris\Http\Middleware\Dispatcher;
 use Polaris\Http\Middleware\ExceptionMiddleware;
@@ -15,7 +16,7 @@ use Polaris\Http\Cookies;
  * Class Server
  * @package Polaris\Http
  */
-class Server extends \Swoole\Http\Server implements RequestHandlerInterface
+class Server extends \Swoole\Http\Server implements RequestHandlerInterface, ServerInterface
 {
 
 	/**
@@ -75,7 +76,17 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 		}
 	}
 
-	/**
+    /**
+     * @return mixed|void
+     */
+	public function restart()
+    {
+        $this->stop();
+        sleep(1);
+        $this->start();
+    }
+
+    /**
 	 * 启动进程数
 	 *
 	 * @return int

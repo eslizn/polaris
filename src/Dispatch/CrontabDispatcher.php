@@ -1,12 +1,13 @@
 <?php
-namespace Polaris\Schedule;
-use Polaris\Schedule\Exceptions\ScheduleException;
+namespace Polaris\Dispatch;
+
+use Polaris\Dispatch\Exceptions\DispatcherException;
 
 /**
- * Class CrontabScheduler
- * @package Polaris\Schedule
+ * Class CrontabDispatcher
+ * @package Polaris\Dispatch
  */
-class CrontabScheduler
+class CrontabDispatcher
 {
 
 	/**
@@ -59,7 +60,7 @@ class CrontabScheduler
 			array_unshift($rules, 0);
 		}
 		if (sizeof($rules) < 6) {
-			throw new ScheduleException('crontab syntax invalid!', -__LINE__);
+			throw new DispatcherException('crontab syntax invalid!', -__LINE__);
 		}
 		$times = array_map('intval', [
 			date('s', $time),
