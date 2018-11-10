@@ -1,7 +1,7 @@
 <?php
 namespace Polaris\Http;
 
-use Polaris\Commands\ServerInterface;
+use Polaris\Console\ServerInterface;
 use Polaris\Http\Middleware\CallableHandler;
 use Polaris\Http\Middleware\Dispatcher;
 use Polaris\Http\Middleware\ExceptionMiddleware;

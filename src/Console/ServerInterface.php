@@ -1,9 +1,9 @@
 <?php
-namespace Polaris\Commands;
+namespace Polaris\Console;
 
 /**
  * Interface ServerInterface
- * @package Polaris\Commands
+ * @package Polaris\Console
  */
 interface ServerInterface
 {
