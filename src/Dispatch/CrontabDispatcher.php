@@ -40,7 +40,7 @@ class CrontabDispatcher
 				if (!is_array($v) || !isset($v[0], $v[1])) {
 					continue;
 				}
-				if (!$this->should($v[0], $now)) {
+				if (!static::should($v[0], $now)) {
 					continue;
 				}
 				$srv->task($v[1]);
@@ -53,7 +53,7 @@ class CrontabDispatcher
 	 * @param integer $time
 	 * @return bool
 	 */
-	protected function should($rule, $time = null)
+	protected static function should($rule, $time = null)
 	{
 		$rules = array_filter(explode(' ', $rule));
 		if (sizeof($rules) < 6) {
@@ -72,19 +72,23 @@ class CrontabDispatcher
 		]);
 		foreach ($rules as $k => $v) {
 			$v = array_map('trim', explode('/', $v));
-			if (strcmp($v[0], '*')) {
-				$v[0] = array_map('trim', explode(',', $v[0]));
-				if (!in_array($times[$k], $v[0])) {
-					return false;
-				}
-			} else {
-				if (!isset($v[1])) {
-					continue;
-				}
-				if ($times[$k]%$v[1]) {
-					return false;
-				}
-			}
+			if (isset($v[1]) && $times[$k]%$v[1]) {
+			    return false;
+            }
+            if (!strcmp($v[0], '*')) {
+                continue;
+            }
+            if (strpos($v[0], '-') !== false) {
+                $range = array_map('trim', explode('-', $v[0]));
+                if (isset($range[0], $range[1]) && ($times[$k] < $range[0] || $times[$k] > $range[1])) {
+                    return false;
+                }
+                continue;
+            }
+            $list = array_map('trim', explode(',', $v[0]));
+            if (!in_array($times[$k], $list)) {
+                return false;
+            }
 		}
 		return true;
 	}
