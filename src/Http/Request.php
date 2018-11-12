@@ -1177,4 +1177,5 @@ class Request extends Message implements ServerRequestInterface
 
         return $params;
     }
+
 }

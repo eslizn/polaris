@@ -21,15 +21,12 @@ class RequestBody extends Body
     public function __construct($data = null)
     {
 		if (!is_null($data)) {
-			//@todo
 			$resource = fopen('php://memory','r+');
 			fwrite($resource, $data);
 			rewind($resource);
 			parent::__construct($resource);
 		} else {
 			$resource = fopen('php://memory', 'w+');
-			stream_copy_to_stream(fopen('php://input', 'r'), $resource);
-			rewind($resource);
 			parent::__construct($resource);
 		}
     }

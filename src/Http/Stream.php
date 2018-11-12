@@ -448,12 +448,4 @@ class Stream implements StreamInterface
         return $this->isPipe;
     }
 
-	/**
-	 *
-	 */
-    public function __destruct()
-	{
-		$this->close();
-	}
-
 }
