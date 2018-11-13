@@ -134,8 +134,8 @@ class Response extends Message implements ResponseInterface
     {
         $this->status = $this->filterStatus($status);
         $this->headers = $headers ? $headers : new Headers();
-        if (is_null($body) || !($body instanceof StreamInterface)) {
-			$body = new Body(fopen('data://text/plain;base64,' . base64_encode($body),'r+'));
+        if (!($body instanceof StreamInterface)) {
+			$body = new Body($body);
 		}
         $this->body = $body;
     }
@@ -497,4 +497,5 @@ class Response extends Message implements ResponseInterface
 		*/
         return $this->getBody()->getSize() ? $this->getBody()->getContents() : '';
     }
+    
 }

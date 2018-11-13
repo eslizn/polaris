@@ -19,30 +19,18 @@ use RuntimeException;
  */
 class Stream implements StreamInterface
 {
-    /**
-     * Bit mask to determine if the stream is a pipe
-     *
-     * This is octal as per header stat.h
-     */
-    const FSTAT_MODE_S_IFIFO = 0010000;
-
-    /**
-     * Resource modes
-     *
-     * @var  array
-     * @link http://php.net/manual/function.fopen.php
-     */
-    protected static $modes = [
-        'readable' => ['r', 'r+', 'w+', 'a+', 'x+', 'c+'],
-        'writable' => ['r+', 'w', 'w+', 'a', 'a+', 'x', 'x+', 'c', 'c+'],
-    ];
 
     /**
      * The underlying stream resource
      *
-     * @var resource
+     * @var string
      */
-    protected $stream;
+    protected $data;
+
+	/**
+	 * @var integer
+	 */
+    protected $position;
 
     /**
      * Stream metadata
@@ -51,51 +39,18 @@ class Stream implements StreamInterface
      */
     protected $meta;
 
-    /**
-     * Is this stream readable?
-     *
-     * @var bool
-     */
-    protected $readable;
+	/**
+	 * @var boolean
+	 */
+    protected $attached;
 
-    /**
-     * Is this stream writable?
-     *
-     * @var bool
-     */
-    protected $writable;
-
-    /**
-     * Is this stream seekable?
-     *
-     * @var bool
-     */
-    protected $seekable;
-
-    /**
-     * The size of the stream if known
-     *
-     * @var null|int
-     */
-    protected $size;
-
-    /**
-     * Is this stream a pipe?
-     *
-     * @var bool
-     */
-    protected $isPipe;
-
-    /**
-     * Create a new Stream.
-     *
-     * @param  resource $stream A PHP resource handle.
-     *
-     * @throws InvalidArgumentException If argument is not a resource.
-     */
-    public function __construct($stream)
+	/**
+	 * Stream constructor.
+	 * @param mixed $data
+	 */
+    public function __construct($data)
     {
-        $this->attach($stream);
+        $this->attach($data);
     }
 
     /**
@@ -114,11 +69,6 @@ class Stream implements StreamInterface
      */
     public function getMetadata($key = null)
     {
-        $this->meta = stream_get_meta_data($this->stream);
-        if (is_null($key) === true) {
-            return $this->meta;
-        }
-
         return isset($this->meta[$key]) ? $this->meta[$key] : null;
     }
 
@@ -131,29 +81,28 @@ class Stream implements StreamInterface
      */
     protected function isAttached()
     {
-        return is_resource($this->stream);
+        return $this->attached;
     }
 
-    /**
-     * Attach new resource to this object.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @param resource $newStream A PHP resource handle.
-     *
-     * @throws InvalidArgumentException If argument is not a valid PHP resource.
-     */
-    protected function attach($newStream)
+	/**
+	 * @param string $data
+	 */
+    protected function attach($data)
     {
-        if (is_resource($newStream) === false) {
-            throw new InvalidArgumentException(__METHOD__ . ' argument must be a valid PHP resource');
+    	if (is_null($data)) {
+    		$data = '';
+		}
+
+        if (is_scalar($data) === false) {
+            throw new InvalidArgumentException(__METHOD__ . ' argument must be a valid PHP scalar');
         }
 
         if ($this->isAttached() === true) {
             $this->detach();
         }
 
-        $this->stream = $newStream;
+        $this->data = strval($data);
+        $this->attached = true;
     }
 
     /**
@@ -165,16 +114,11 @@ class Stream implements StreamInterface
      */
     public function detach()
     {
-        $oldResource = $this->stream;
-        $this->stream = null;
-        $this->meta = null;
-        $this->readable = null;
-        $this->writable = null;
-        $this->seekable = null;
-        $this->size = null;
-        $this->isPipe = null;
-
-        return $oldResource;
+        $this->data = null;
+        $this->meta = [];
+        $this->attached = false;
+		$this->position = 0;
+        return null;
     }
 
     /**
@@ -193,16 +137,7 @@ class Stream implements StreamInterface
      */
     public function __toString()
     {
-        if (!$this->isAttached()) {
-            return '';
-        }
-
-        try {
-            $this->rewind();
-            return $this->getContents();
-        } catch (RuntimeException $e) {
-            return '';
-        }
+        return $this->getContents();
     }
 
     /**
@@ -210,14 +145,6 @@ class Stream implements StreamInterface
      */
     public function close()
     {
-        if ($this->isAttached() === true) {
-            if ($this->isPipe()) {
-                pclose($this->stream);
-            } else {
-                fclose($this->stream);
-            }
-        }
-
         $this->detach();
     }
 
@@ -228,12 +155,7 @@ class Stream implements StreamInterface
      */
     public function getSize()
     {
-        if (!$this->size && $this->isAttached() === true) {
-            $stats = fstat($this->stream);
-            $this->size = isset($stats['size']) && !$this->isPipe() ? $stats['size'] : null;
-        }
-
-        return $this->size;
+        return strlen($this->data);
     }
 
     /**
@@ -245,11 +167,11 @@ class Stream implements StreamInterface
      */
     public function tell()
     {
-        if (!$this->isAttached() || ($position = ftell($this->stream)) === false || $this->isPipe()) {
+        if (!$this->isAttached()) {
             throw new RuntimeException('Could not get the position of the pointer in stream');
         }
 
-        return $position;
+        return $this->position;
     }
 
     /**
@@ -259,7 +181,7 @@ class Stream implements StreamInterface
      */
     public function eof()
     {
-        return $this->isAttached() ? feof($this->stream) : true;
+        return $this->position >= strlen($this->data);
     }
 
     /**
@@ -269,24 +191,7 @@ class Stream implements StreamInterface
      */
     public function isReadable()
     {
-        if ($this->readable === null) {
-            if ($this->isPipe()) {
-                $this->readable = true;
-            } else {
-                $this->readable = false;
-                if ($this->isAttached()) {
-                    $meta = $this->getMetadata();
-                    foreach (self::$modes['readable'] as $mode) {
-                        if (strpos($meta['mode'], $mode) === 0) {
-                            $this->readable = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $this->readable;
+    	return true;
     }
 
     /**
@@ -296,20 +201,7 @@ class Stream implements StreamInterface
      */
     public function isWritable()
     {
-        if ($this->writable === null) {
-            $this->writable = false;
-            if ($this->isAttached()) {
-                $meta = $this->getMetadata();
-                foreach (self::$modes['writable'] as $mode) {
-                    if (strpos($meta['mode'], $mode) === 0) {
-                        $this->writable = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $this->writable;
+        return true;
     }
 
     /**
@@ -319,15 +211,7 @@ class Stream implements StreamInterface
      */
     public function isSeekable()
     {
-        if ($this->seekable === null) {
-            $this->seekable = false;
-            if ($this->isAttached()) {
-                $meta = $this->getMetadata();
-                $this->seekable = !$this->isPipe() && $meta['seekable'];
-            }
-        }
-
-        return $this->seekable;
+        return true;
     }
 
     /**
@@ -346,10 +230,16 @@ class Stream implements StreamInterface
      */
     public function seek($offset, $whence = SEEK_SET)
     {
-        // Note that fseek returns 0 on success!
-        if (!$this->isSeekable() || fseek($this->stream, $offset, $whence) === -1) {
-            throw new RuntimeException('Could not seek in stream');
-        }
+    	switch ($whence) {
+			case SEEK_SET:
+				$this->position = $offset;
+			case SEEK_CUR:
+				$this->position += $offset;
+			case SEEK_END:
+				$this->position = $this->getSize() - 1 - $offset;
+			default:
+				throw new RuntimeException('Could not seek in stream');
+		}
     }
 
     /**
@@ -366,9 +256,7 @@ class Stream implements StreamInterface
      */
     public function rewind()
     {
-        if (!$this->isSeekable() || rewind($this->stream) === false) {
-            throw new RuntimeException('Could not rewind stream');
-        }
+        $this->position = 0;
     }
 
     /**
@@ -385,10 +273,11 @@ class Stream implements StreamInterface
      */
     public function read($length)
     {
-        if (!$this->isReadable() || ($data = fread($this->stream, $length)) === false) {
+        if (!$this->isReadable() || $this->position + $length >= $this->getSize()) {
             throw new RuntimeException('Could not read from stream');
         }
-
+		$data = substr($this->data, $this->position, $length);
+        $this->position += $length;
         return $data;
     }
 
@@ -403,14 +292,12 @@ class Stream implements StreamInterface
      */
     public function write($string)
     {
-        if (!$this->isWritable() || ($written = fwrite($this->stream, $string)) === false) {
+        if (!$this->isWritable() || $this->position >= $this->getSize()) {
             throw new RuntimeException('Could not write to stream');
         }
-
-        // reset size so that it will be recalculated on next call to getSize()
-        $this->size = null;
-
-        return $written;
+        $this->data = substr($this->data, 0, $this->position) . $string . substr($this->data, $this->position);
+		$this->position += strlen($string);
+        return strlen($string);
     }
 
     /**
@@ -423,11 +310,10 @@ class Stream implements StreamInterface
      */
     public function getContents()
     {
-        if (!$this->isReadable() || ($contents = stream_get_contents($this->stream)) === false) {
+        if (!$this->isReadable()) {
             throw new RuntimeException('Could not get contents of stream');
         }
-
-        return $contents;
+        return $this->data;
     }
 
     /**
@@ -437,15 +323,7 @@ class Stream implements StreamInterface
      */
     public function isPipe()
     {
-        if ($this->isPipe === null) {
-            $this->isPipe = false;
-            if ($this->isAttached()) {
-                $mode = fstat($this->stream)['mode'];
-                $this->isPipe = ($mode & self::FSTAT_MODE_S_IFIFO) !== 0;
-            }
-        }
-
-        return $this->isPipe;
+        return false;
     }
 
 }

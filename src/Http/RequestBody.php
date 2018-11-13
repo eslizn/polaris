@@ -14,21 +14,4 @@ namespace Polaris\Http;
 class RequestBody extends Body
 {
 
-	/**
-	 * RequestBody constructor.
-	 * @param null $data
-	 */
-    public function __construct($data = null)
-    {
-		if (!is_null($data)) {
-			$resource = fopen('php://memory','r+');
-			fwrite($resource, $data);
-			rewind($resource);
-			parent::__construct($resource);
-		} else {
-			$resource = fopen('php://memory', 'w+');
-			parent::__construct($resource);
-		}
-    }
-
 }

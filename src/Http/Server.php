@@ -178,9 +178,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 		} catch (\Throwable $e) {
 			$this->handleException($e);
 			$writer->end();
-		} finally {
-		    $request->getBody()->close();
-		    $response->getBody()->close();
         }
 	}
 
