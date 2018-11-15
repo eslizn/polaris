@@ -44,9 +44,6 @@ class HtmlResponse extends Response
     public function __construct($view, $data = [], $status = 200, $headers = null, Request $request = null)
     {
     	$this->request = $request;
-    	if ($request) {
-    		$data = array_merge(compact('request'), $data);
-		}
     	$this->container = $request ? $request->getAttribute(Container::class) : null;
     	if (!$this->container) {
 			$this->container = new Container();
@@ -65,6 +62,8 @@ class HtmlResponse extends Response
 		}
         (new ViewServiceProvider($this->container))->register();
         $this->resolver = $this->container->make('view.engine.resolver');
+		$this->container['view']->share('__request', $request);
+		$this->compileInject();
         parent::__construct($status, $headers, $this->container['view']->make($view, $data)->render());
     }
 
@@ -74,6 +73,29 @@ class HtmlResponse extends Response
     protected function getCompiler($engine = 'blade')
 	{
 		return $this->resolver->resolve($engine)->getCompiler();
+	}
+
+	/**
+	 * @param string $name
+	 * @param callable $handler
+	 * @return static
+	 */
+	protected function directive($name, callable $handler)
+	{
+		$this->getCompiler()->directive($name, $handler);
+		return $this;
+	}
+
+	/**
+	 *
+	 */
+	protected function compileInject()
+	{
+		$this->directive('inject', function ($expression) {
+			$segments = explode(',', preg_replace("/[\(\)\\\"\']/", '', $expression));
+			list($variable, $service) = array_map('trim', $segments);
+			return "<?php \${$variable} = \$__request->getAttribute({$service}); ?>";
+		});
 	}
 
 }
