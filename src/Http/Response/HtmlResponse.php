@@ -8,8 +8,8 @@ use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\ViewServiceProvider;
 use Polaris\Http\HeadersInterface;
-use Polaris\Http\Request;
 use Polaris\Http\Response;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Class HtmlResponse
@@ -17,11 +17,6 @@ use Polaris\Http\Response;
  */
 class HtmlResponse extends Response
 {
-
-	/**
-	 * @var Request
-	 */
-	protected $request;
 
 	/**
 	 * @var Container
@@ -33,17 +28,16 @@ class HtmlResponse extends Response
 	 */
 	protected $resolver;
 
-    /**
-     * HtmlResponse constructor.
-	 *
-     * @param string $view
-     * @param array $data
-     * @param int $status
-     * @param null $headers
-     */
-    public function __construct($view, $data = [], $status = 200, $headers = null, Request $request = null)
+	/**
+	 * HtmlResponse constructor.
+	 * @param ServerRequestInterface $request
+	 * @param string $view
+	 * @param array $data
+	 * @param int $status
+	 * @param null $headers
+	 */
+    public function __construct(ServerRequestInterface $request, $view, $data = [], $status = 200, $headers = null)
     {
-    	$this->request = $request;
     	$this->container = $request ? $request->getAttribute(Container::class) : null;
     	if (!$this->container) {
 			$this->container = new Container();
@@ -62,7 +56,9 @@ class HtmlResponse extends Response
 		}
         (new ViewServiceProvider($this->container))->register();
         $this->resolver = $this->container->make('view.engine.resolver');
-		$this->container['view']->share('__request', $request);
+        if ($request) {
+			$this->container['view']->share('request', $request);
+		}
 		$this->compileInject();
         parent::__construct($status, $headers, $this->container['view']->make($view, $data)->render());
     }
@@ -94,7 +90,7 @@ class HtmlResponse extends Response
 		$this->directive('inject', function ($expression) {
 			$segments = explode(',', preg_replace("/[\(\)\\\"\']/", '', $expression));
 			list($variable, $service) = array_map('trim', $segments);
-			return "<?php \${$variable} = \$__request->getAttribute({$service}); ?>";
+			return "<?php \${$variable} = isset(\$request) ? \$request->getAttribute({$service}) : null; ?>";
 		});
 	}
 
