@@ -14,16 +14,19 @@ class ServerConsole extends Command
 {
 
     /**
-     * @var ServerInterface
+     * @var mixed
      */
     protected $server;
 
     /**
      * ServerCommand constructor.
-     * @param ServerInterface $server
+     * @param mixed $server
      */
-    public function __construct(ServerInterface $server)
+    public function __construct($server)
     {
+        if (!is_subclass_of($server, ServerInterface::class)) {
+            throw new \InvalidArgumentException('server must implements ServerInterface!', -__LINE__);
+        }
         $this->server = $server;
         parent::__construct();
     }
@@ -47,6 +50,9 @@ class ServerConsole extends Command
     {
         if (!in_array(strtolower($input->getArgument('cmd')), ['start', 'stop', 'restart', 'reload'])) {
             $output->writeln('<error>server only support start|stop|restart|reload command!</error>');
+        }
+        if (is_string($this->server)) {
+            $this->server = new $this->server;
         }
         call_user_func([$this->server, $input->getArgument('cmd')]);
     }
