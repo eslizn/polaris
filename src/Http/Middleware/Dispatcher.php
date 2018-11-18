@@ -2,6 +2,7 @@
 namespace Polaris\Http\Middleware;
 
 use Polaris\Http\Exceptions\HttpException;
+use Polaris\Http\Request;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -96,7 +97,7 @@ class Dispatcher extends \SplQueue implements RequestHandlerInterface
 			if (!($middleware instanceof MiddlewareInterface)) {
 				throw new \UnexpectedValueException('invalid middleware!', -__LINE__);
 			}
-			return $middleware->process($request->withAttribute(ServerRequestInterface::class, $request), $this->resolve());
+			return $middleware->process($request->withAttribute(ServerRequestInterface::class, $request)->withAttribute(Request::class, $request), $this->resolve());
 		});
 	}
 
