@@ -107,7 +107,7 @@ class Cookies implements CookiesInterface
 			throw new InvalidArgumentException('properties value must be a array.');
 		}
 		$cookies = [];
-		$cookies[] = urlencode($name) . '=' . (isset($properties['value']) ? $properties['value'] : '');
+		$cookies[] = urlencode($name) . '=' . (isset($properties['value']) ? urlencode($properties['value']) : '');
 		unset($properties['value']);
 		foreach ($properties as $k => $v) {
 			if (in_array($k, ['secure', 'hostonly', 'httponly'])) {
