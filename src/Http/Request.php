@@ -126,8 +126,7 @@ class Request extends Message implements ServerRequestInterface
 		}
 
 		return $req->withAttribute(\Swoole\Http\Request::class, $request)
-			->withAttribute(static::class, $req)
-			->withAttribute(ServerRequestInterface::class, $req);
+			->withAttribute(static::class, $req);
 	}
 
     /**
@@ -889,7 +888,17 @@ class Request extends Message implements ServerRequestInterface
      */
     public function getAttribute($name, $default = null)
     {
-        return $this->attributes->get($name, $default);
+		if ($this->attributes->has($name)) {
+			return $this->attributes->get($name);
+		} else if (interface_exists($name)) {
+			foreach ($this->attributes as $k => $v) {
+				if (is_subclass_of($k, $name)) {
+					return $v;
+				}
+			}
+		} else {
+			return $default;
+		}
     }
 
     /**

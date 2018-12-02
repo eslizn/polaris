@@ -97,7 +97,7 @@ class Dispatcher extends \SplQueue implements RequestHandlerInterface
 			if (!($middleware instanceof MiddlewareInterface)) {
 				throw new \UnexpectedValueException('invalid middleware!', -__LINE__);
 			}
-			return $middleware->process($request->withAttribute(ServerRequestInterface::class, $request)->withAttribute(Request::class, $request), $this->resolve());
+			return $middleware->process($request->withAttribute(Request::class, $request), $this->resolve());
 		});
 	}
 
