@@ -37,7 +37,7 @@ trait MiddlewareTrait
 	 */
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
-		if (empty($this->middlewares)) {
+		if (empty($this->stack)) {
 			throw new \RuntimeException('middleware is empty!', -__LINE__);
 		}
 		$delegate = new class implements RequestHandlerInterface {
