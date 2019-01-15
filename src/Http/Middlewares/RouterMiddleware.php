@@ -1,19 +1,22 @@
 <?php
-namespace Polaris\Http\Router;
+namespace Polaris\Http\Middlewares;
 
 use Polaris\Http\Exceptions\HttpException;
-use Polaris\Http\Middleware\Dispatcher;
+use Polaris\Http\Interfaces\RouterInterface;
+use Polaris\Http\Server;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Class Router
- *
- * @package Polaris\Http\Router
+ * Class RouterMiddleware
+ * @package Polaris\Http\Middlewares
  */
-class Router implements RouterInterface
+class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestHandlerInterface
 {
+
+	use MiddlewareTrait;
 
 	/**
 	 * @var string
@@ -31,22 +34,31 @@ class Router implements RouterInterface
 	protected $groupMiddleware = [];
 
 	/**
-	 * @var array
-	 */
-	protected $routes = [];
-
-	/**
 	 * @var \FastRoute\Dispatcher
 	 */
 	protected $dispatcher = null;
 
 	/**
+	 * @var array
+	 */
+	protected $routes = [];
+
+	/**
 	 * Router constructor.
+	 * @param string $routes
 	 * @param string $namespace
 	 */
-	public function __construct($namespace = 'App')
+	public function __construct($routes, $namespace = 'App')
 	{
 		$this->namespace = $namespace;
+		if (file_exists($routes)) {
+			include ($routes);
+		}
+		$this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $r) {
+			foreach ($this->routes as $route) {
+				$r->addRoute(...$route);
+			}
+		});
 	}
 
 	/**
@@ -149,6 +161,17 @@ class Router implements RouterInterface
 	}
 
 	/**
+	 * @param string $pattern
+	 * @param mixed $handler
+	 * @param mixed ...$middleware
+	 * @return static
+	 */
+	public function any($pattern, $handler, ...$middleware)
+	{
+		return $this->map(['*'], $pattern, $handler, ...$middleware);
+	}
+
+	/**
 	 * @param mixed $methods
 	 * @param string $pattern
 	 * @param mixed handler
@@ -159,33 +182,6 @@ class Router implements RouterInterface
 	{
 		$this->routes[] = [$methods, implode($this->groupPatterns) . $pattern, [$handler, array_merge($this->groupMiddleware, $middleware)]];
 		return $this;
-	}
-
-	/**
-	 * @param ServerRequestInterface $request
-	 * @return ResponseInterface
-	 */
-	public function handle(ServerRequestInterface $request): ResponseInterface
-	{
-		$route = $this->getDispatcher()->dispatch($request->getMethod(), $request->getUri()->getPath());
-		switch ($route[0]) {
-			case \FastRoute\Dispatcher::NOT_FOUND:
-				throw new HttpException(404);
-			case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-				throw new HttpException(405);
-			case \FastRoute\Dispatcher::FOUND:
-				$request = $request->withQueryParams(array_merge($request->getQueryParams(), $route[2]));
-				list($handler, $middlewares) = $route[1];
-				if (is_string($handler) && !class_exists($handler)) {
-					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
-				}
-				$dispatcher = new Dispatcher();
-				return $dispatcher->enqueue(...$middlewares)
-					->enqueue($handler)
-					->handle($request);
-			default:
-				throw new HttpException(500);
-		}
 	}
 
 	/**
@@ -206,20 +202,30 @@ class Router implements RouterInterface
 	}
 
 	/**
-	 * @return \FastRoute\Dispatcher
+	 * @param ServerRequestInterface $request
+	 * @param RequestHandlerInterface $handler
+	 * @return ResponseInterface
 	 */
-	private function getDispatcher()
+	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
-		if ($this->dispatcher) {
-			return $this->dispatcher;
+		$route = $this->getDispatcher()->dispatch($request->getMethod(), $request->getUri()->getPath());
+		switch ($route[0]) {
+			case \FastRoute\Dispatcher::NOT_FOUND:
+				throw new HttpException(404);
+			case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
+				throw new HttpException(405);
+			case \FastRoute\Dispatcher::FOUND:
+				$request = $request->withQueryParams(array_merge($request->getQueryParams(), $route[2]));
+				list($handler, $middlewares) = $route[1];
+				if (is_string($handler) && !is_callable($handler)) {
+					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
+				}
+				$this->middlewares($middlewares)
+					->middlewares(new Endpoint($handler));
+				return $this->handle($request);
+			default:
+				throw new HttpException(500);
 		}
-		$routes = $this->routes;
-		$this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $r) use ($routes) {
-			foreach ($routes as $route) {
-				$r->addRoute(...$route);
-			}
-		});
-		return $this->dispatcher;
 	}
 
 }

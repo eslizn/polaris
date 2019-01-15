@@ -1,5 +1,5 @@
 <?php
-namespace Polaris\Http\Middleware;
+namespace Polaris\Http\Middlewares;
 
 use Polaris\Http\Exceptions\HttpException;
 use Polaris\Http\Response;

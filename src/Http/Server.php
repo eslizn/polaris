@@ -1,12 +1,8 @@
 <?php
 namespace Polaris\Http;
 
-use Polaris\Console\ServerInterface;
-use Polaris\Http\Middleware\CallableHandler;
-use Polaris\Http\Middleware\Dispatcher;
-use Polaris\Http\Middleware\ExceptionMiddleware;
-use Polaris\Http\Middleware\ResponseMiddleware;
-use Polaris\Http\Router\RouterInterface;
+use Polaris\Http\Middlewares\MiddlewareTrait;
+use Polaris\Http\Middlewares\RouterMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -16,25 +12,15 @@ use Polaris\Http\Cookies;
  * Class Server
  * @package Polaris\Http
  */
-class Server extends \Swoole\Http\Server implements RequestHandlerInterface, ServerInterface
+class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 {
+
+	use MiddlewareTrait;
 
 	/**
 	 * @var array
 	 */
 	protected $options = [];
-
-	/**
-	 * @var RouterInterface
-	 */
-	protected $router = null;
-
-	/**
-	 * middlewares
-	 *
-	 * @var array
-	 */
-	protected $middlewares = [];
 
 	/**
 	 * Server constructor.
@@ -46,8 +32,8 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 		if (!defined('ENVIRONMENT')) {
 			define('ENVIRONMENT', 'production');
 		}
-		if (!defined('DEVELOPMENT')) {
-			define('DEVELOPMENT', strcasecmp(ENVIRONMENT, 'development') ? false : true);
+		if (!defined('DEBUG')) {
+			define('DEBUG', strcasecmp(ENVIRONMENT, 'development') ? false : true);
 		}
 		$this->options = array_merge([
 			'name' => basename($workspace),
@@ -68,7 +54,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 			}
 		}, E_ALL | E_STRICT);
 		parent::__construct($this->options['host'], $this->options['port']);
-        	parent::set($this->options);
+		parent::set($this->options);
 		foreach (get_class_methods($this) as $method) {
 			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
 				$this->on($matches[1], [$this, $method]);
@@ -76,7 +62,21 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 		}
 	}
 
-    /**
+	/**
+	 * @return bool|void
+	 */
+	public function start()
+	{
+		//load middlewares
+		if (file_exists($this->options['middlewares'])) {
+			$this->middlewares(include $this->options['middlewares'] ?: []);
+		}
+		//append router
+		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));
+		parent::start();
+	}
+
+	/**
      * @return mixed|void
      */
 	public function restart()
@@ -85,6 +85,16 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
         sleep(1);
         $this->start();
     }
+
+	/**
+	 * @param mixed $offset
+	 * @param mixed $default
+	 * @return mixed
+	 */
+    public function getOptions($offset = null, $default = null)
+	{
+		return is_null($offset) ? $this->options : (isset($this->options[$offset]) ? $this->options[$offset] : $default);
+	}
 
     /**
 	 * 启动进程数
@@ -115,28 +125,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 			}
 		}
 		return $total > 1 ? intval($total/2) : $total;
-	}
-
-	/**
-	 * @param Server $srv
-	 * @param integer $id
-	 */
-	public function onWorkerStart(Server $srv, $id)
-	{
-	    if ($this->taskworker) {
-	        return;
-        }
-		//init router
-		$routes = $this->options['routes'];
-		$router = new Router\Router($this->options['namespace']);
-		if ($routes && file_exists($routes)) {
-			include $routes;
-		}
-		$this->router = $router;
-		//load middlewares
-		if (file_exists($this->options['middlewares'])) {
-			$this->middlewares = array_merge($this->middlewares, include $this->options['middlewares'] ?: []);
-		}
 	}
 
 	/**
@@ -182,20 +170,6 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @return ResponseInterface
-	 */
-	public function handle(ServerRequestInterface $request): ResponseInterface
-	{
-		$dispatcher = new Dispatcher();
-		return $dispatcher->enqueue(...$this->middlewares)
-			->enqueue(function (ServerRequestInterface $request) {
-				return $this->router->handle($request);
-			})
-			->handle($request);
-	}
-
-	/**
 	 * @param \Throwable $e
 	 * @return ResponseInterface
 	 */
@@ -206,7 +180,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface, Ser
 			getmypid(),
 			basename($e->getFile()),
 			$e->getLine(),
-			DEVELOPMENT ? strval($e) : $e->getMessage()
+			DEBUG ? $e->__toString() : $e->getMessage()
 		);
 	}
 
