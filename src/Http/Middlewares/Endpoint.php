@@ -1,6 +1,8 @@
 <?php
 namespace Polaris\Http\Middlewares;
 
+use Polaris\Http\Headers;
+use Polaris\Http\Response;
 use Polaris\Http\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -46,10 +48,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 	{
 		$response = null;
 		if (is_string($this->callable) && !is_callable($this->callable)) {
-			if (class_exists($callable)) {
-				$callable = new $callable;
-			}
-			list($class, $method) = explode('@', $handler);
+			list($class, $method) = explode('@', $this->callable);
 			if (!class_exists($class)) {
 				throw new HttpException(404);
 			}
@@ -62,7 +61,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 			$arguments = static::parseArguments($reflect->getMethod($method), $request);
 			$response = $class->$method(...$arguments);
 		} else {
-			if (!is_callable($handler)) {
+			if (!is_callable($this->callable)) {
 				throw new HttpException(500);
 			}
 			$arguments = static::parseArguments(new \ReflectionFunction($handler), $request);
@@ -71,9 +70,9 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 		if (is_null($response)) {
 			return new Response();
 		} else if (is_scalar($response)) {
-			return new Response(200, ['Content-Type' => 'text/plain'], $response);
+			return new Response(200, new Headers(['Content-Type' => 'text/plain']), $response);
 		} else if (is_array($response) || (is_object($response) && $response instanceof \JsonSerializable)) {
-			return new Response(200, ['Content-Type' => 'application/json'], json_encode($response));
+			return new Response(200, new Headers(['Content-Type' => 'application/json']), json_encode($response));
 		} else {
 			return $response;
 		}
