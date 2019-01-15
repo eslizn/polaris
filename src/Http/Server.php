@@ -69,7 +69,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	{
 		//load middlewares
 		if (file_exists($this->options['middlewares'])) {
-			$this->middlewares(include $this->options['middlewares'] ?: []);
+			$this->middlewares(...(include $this->options['middlewares'] ?: []));
 		}
 		//append router
 		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));

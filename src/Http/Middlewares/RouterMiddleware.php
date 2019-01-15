@@ -210,7 +210,7 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestH
 	 */
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
-		$route = $this->getDispatcher()->dispatch($request->getMethod(), $request->getUri()->getPath());
+		$route = $this->dispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
 		switch ($route[0]) {
 			case \FastRoute\Dispatcher::NOT_FOUND:
 				throw new HttpException(404);
@@ -222,7 +222,7 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestH
 				if (is_string($handler) && !is_callable($handler)) {
 					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
 				}
-				$this->middlewares($middlewares)
+				$this->middlewares(...$middlewares)
 					->middlewares(new Endpoint($handler));
 				return $this->handle($request);
 			default:
