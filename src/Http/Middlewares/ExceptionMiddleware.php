@@ -27,7 +27,7 @@ class ExceptionMiddleware implements MiddlewareInterface
 		} catch (HttpException $e) {
 			return new Response($e->getStatusCode(), null, $e->getStatusText());
 		} catch (\Throwable $e) {
-			return new Response(500, null, DEVELOPMENT ? $e->__toString() : null);
+			return new Response(500, null, DEBUG ? $e->__toString() : $e->getMessage());
 		}
 	}
 
