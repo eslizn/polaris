@@ -13,7 +13,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  * Class RouterMiddleware
  * @package Polaris\Http\Middlewares
  */
-class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestHandlerInterface
+class RouterMiddleware implements RouterInterface, MiddlewareInterface
 {
 
 	use MiddlewareTrait;
@@ -222,9 +222,10 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestH
 				if (is_string($handler) && !is_callable($handler)) {
 					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
 				}
-				$this->middlewares(...$middlewares)
+				$dispatcher = new Dispatcher();
+				$dispatcher->middlewares(...$middlewares)
 					->middlewares(new Endpoint($handler));
-				return $this->handle($request);
+				return $dispatcher->handle($request);
 			default:
 				throw new HttpException(500);
 		}
