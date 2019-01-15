@@ -52,7 +52,9 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface, RequestH
 	{
 		$this->namespace = $namespace;
 		if (file_exists($routes)) {
-			include ($routes);
+			(function ($router) use ($routes) {
+				include ($routes);
+			})($this);
 		}
 		$this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $r) {
 			foreach ($this->routes as $route) {
