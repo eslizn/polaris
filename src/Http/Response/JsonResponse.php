@@ -21,7 +21,7 @@ class JsonResponse extends Response
 	{
 		parent::__construct($status, $headers ?: new Headers(['Content-Type' => 'application/json']), json_encode($data));
 		if (json_last_error()) {
-			throw new \RuntimeException(json_last_error_msg(), -(0xfe00 | abs(json_last_error())));
+			throw new \InvalidArgumentException(json_last_error_msg(), -abs(json_last_error()));
 		}
 	}
 
