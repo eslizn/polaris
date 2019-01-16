@@ -133,7 +133,7 @@ class Response extends Message implements ResponseInterface
     public function __construct($status = 200, HeadersInterface $headers = null, $body = null)
     {
         $this->status = $this->filterStatus($status);
-        $this->headers = $headers ? $headers : new Headers();
+        $this->headers = $headers ?: new Headers();
         if (!($body instanceof StreamInterface)) {
 			$body = new Body($body);
 		}
