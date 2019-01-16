@@ -36,7 +36,7 @@ class CrontabJob implements JobInterface
 		\Swoole\Timer::tick(1000, function () use ($server, $task_id, $worker_id) {
 			$now = time();
 			foreach (file_exists($this->crontab) ? include $this->crontab : [] as $k => $v) {
-				if ($k % $server->setting['task_worker_num'] != ($task_id - $server->setting['worker_num'])) {
+				if ($k % $server->setting['task_worker_num'] != ($worker_id - $server->setting['worker_num'])) {
 					continue;
 				}
 				if (!is_array($v) || !isset($v[0], $v[1])) {

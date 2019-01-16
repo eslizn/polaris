@@ -22,12 +22,10 @@ trait DispatcherTrait
 		if (!($this instanceof \Swoole\Server)) {
 			throw new DispatcherException('the dispatcher only support swoole server!', -__LINE__);
 		}
-		if ($this->taskworker) {//support task in taskworker
-			$worker_pid = $this->worker_pid;
-			\Swoole\Coroutine::create(function () use ($data, $worker_id, $worker_pid) {
-				$this->onTask($this, $worker_id, $worker_pid, $data);
-			});
-			return true;
+		if ($this->taskworker) {
+			$task_id = rand(0, 1000);
+			$this->onTask($this, $task_id, $this->worker_id, $data);
+			return $task_id;
 		} else {
 			return parent::task($data, $worker_id, $finish);
 		}
@@ -48,12 +46,13 @@ trait DispatcherTrait
 					}
 				}
 			});
+			return;
 		}
 		switch (sizeof($arguments)) {
 			case 2://task_enable_coroutine=true
 				list($server, $task) = $arguments;
 				$task_id = $task->id;
-				$worker_id = $task->workerId;
+				$worker_id = $task->worker_id;
 				$data = $task->data;
 				break;
 			case 4:
