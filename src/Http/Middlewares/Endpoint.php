@@ -64,8 +64,8 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 			if (!is_callable($this->callable)) {
 				throw new HttpException(500);
 			}
-			$arguments = static::parseArguments(new \ReflectionFunction($handler), $request);
-			$response = $handler(...$arguments);
+			$arguments = static::parseArguments(new \ReflectionFunction($this->callable), $request);
+			$response = ($this->callable)(...$arguments);
 		}
 		if (is_null($response)) {
 			return new Response();

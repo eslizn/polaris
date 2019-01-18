@@ -73,7 +73,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 		}
 		//append router
 		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));
-		parent::start();
+		return parent::start();
 	}
 
 	/**
