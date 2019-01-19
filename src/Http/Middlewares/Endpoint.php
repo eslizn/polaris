@@ -2,6 +2,7 @@
 namespace Polaris\Http\Middlewares;
 
 use Polaris\Http\Headers;
+use Polaris\Http\Request;
 use Polaris\Http\Response;
 use Polaris\Http\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
@@ -88,7 +89,10 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 		$arguments = [];
 		foreach ($abstract->getParameters() as $p) {
 			if ($p->getClass()) {
-				$arguments[] = $request->getAttribute($p->getClass()->getName());
+				$arguments[] = in_array($p->getClass()->getName(), [
+					Request::class,
+					ServerRequestInterface::class
+				]) ? $request : $request->getAttribute($p->getClass()->getName());
 			} else if (!is_null($request->getAttribute($p->getName()))) {
 				$arguments[] = $request->getAttribute($p->getName());
 			} else if (key_exists($p->getName(), $request->getParsedBody()?:[])) {

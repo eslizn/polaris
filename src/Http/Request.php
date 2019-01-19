@@ -125,8 +125,7 @@ class Request extends Message implements ServerRequestInterface
 			$req = $req->withParsedBody($request->post);
 		}
 
-		return $req->withAttribute(\Swoole\Http\Request::class, $request)
-			->withAttribute(static::class, $req);
+		return $req->withAttribute(\Swoole\Http\Request::class, $request);
 	}
 
     /**
