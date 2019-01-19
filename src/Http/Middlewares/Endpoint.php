@@ -88,7 +88,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 		$arguments = [];
 		foreach ($abstract->getParameters() as $p) {
 			if ($p->getClass()) {
-				$arguments[] = $p->getClass()->getName() === ServerRequestInterface::class ? $request : $request->getAttribute($p->getClass()->getName());
+				$arguments[] = $request->getAttribute($p->getClass()->getName());
 			} else if (!is_null($request->getAttribute($p->getName()))) {
 				$arguments[] = $request->getAttribute($p->getName());
 			} else if (key_exists($p->getName(), $request->getParsedBody()?:[])) {
