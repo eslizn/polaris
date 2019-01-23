@@ -73,7 +73,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 		} else if (is_scalar($response)) {
 			return new Response(200, new Headers(['Content-Type' => 'text/plain']), $response);
 		} else if (is_array($response) || (is_object($response) && $response instanceof \JsonSerializable)) {
-			return new Response(200, new Headers(['Content-Type' => 'application/json']), json_encode($response));
+			return new Response\JsonResponse($response);
 		} else {
 			return $response;
 		}
