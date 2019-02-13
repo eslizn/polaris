@@ -152,6 +152,9 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 					}
 				}
 			}
+			if (!$response->getHeader('Server')) {
+				$writer->header('Server', 'Polaris');
+			}
 			if ($response->getBody()->getSize()) {
 				if ($response instanceof Response\FileResponse) {
 					$file = $response->getBody()->getContents();
