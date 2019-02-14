@@ -65,24 +65,24 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 
 	/**
 	 * @param string $pattern
+	 * @param string $handler
 	 * @param string $name
-	 * @param string $id
 	 * @param mixed ...$middleware
 	 * @return static
 	 */
-	public function resource($pattern, $name, $id = 'id', ...$middleware)
+	public function resource($pattern, $handler, $name = 'id', ...$middleware)
 	{
 		foreach ([
 			 'index' => [['GET'], $pattern],
 			 'create' => [['GET'], sprintf('%s/create', $pattern)],
 			 'store' => [['POST'], $pattern],
-			 'show' => [['GET'], sprintf('%s/{%s}', $pattern, $id)],
-			 'edit' => [['GET'], sprintf('%s/{%s}/edit', $pattern, $id)],
-			 'update' => [['PUT', 'PATCH'], sprintf('%s/{%s}', $pattern, $id)],
-			 'destroy' => [['DELETE'], sprintf('%s/{%s}', $pattern, $id)],
+			 'show' => [['GET'], sprintf('%s/{%s}', $pattern, $name)],
+			 'edit' => [['GET'], sprintf('%s/{%s}/edit', $pattern, $name)],
+			 'update' => [['PUT', 'PATCH'], sprintf('%s/{%s}', $pattern, $name)],
+			 'destroy' => [['DELETE'], sprintf('%s/{%s}', $pattern, $name)],
 		 ] as $action => $args) {
 			list($methods, $pattern) = $args;
-			$this->map($methods, $pattern, sprintf('%s@%s', $name, $action), ...$middleware);
+			$this->map($methods, $pattern, sprintf('%s@%s', $handler, $action), ...$middleware);
 		}
 		return $this;
 	}
