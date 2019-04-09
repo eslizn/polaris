@@ -51,7 +51,7 @@ class Body implements StreamInterface
 	 * Stream constructor.
 	 * @param mixed $data
 	 */
-	public function __construct($data)
+	public function __construct($data = null)
 	{
 		$this->attach($data);
 	}

@@ -6,7 +6,6 @@ use Polaris\Http\Middlewares\RouterMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Polaris\Http\Cookies;
 
 /**
  * Class Server
@@ -16,6 +15,11 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 {
 
 	use MiddlewareTrait;
+
+	/**
+	 * @var resource
+	 */
+	protected $pid;
 
 	/**
 	 * @var array
@@ -29,15 +33,16 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	 */
 	public function __construct($workspace, $options = [])
 	{
-		if (!defined('ENVIRONMENT')) {
-			define('ENVIRONMENT', 'production');
-		}
-		if (!defined('DEBUG')) {
-			define('DEBUG', strcasecmp(ENVIRONMENT, 'development') ? false : true);
+		if (!defined('DEVELOPMENT')) {
+			define('DEVELOPMENT', strcasecmp(ENVIRONMENT, 'development') ? false : true);
 		}
 		$this->options = array_merge([
 			'name' => basename($workspace),
 			'workspace' => $workspace,
+			'http_gzip_level' => 0,
+			'http_compression' => false,
+			'pid_file' => sprintf('/var/run/%s_master.pid', basename($workspace)),
+			'log_file' => sprintf('%s/log/%s.log', $workspace, basename($workspace)),
 			'host' => '127.0.0.1',
 			'port' => 0,
 			'reload_async' => true,
@@ -53,50 +58,9 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 				throw new \ErrorException($msg, $code, $code, $file, $line);
 			}
 		}, E_ALL | E_STRICT);
-		parent::__construct($this->options['host'], $this->options['port']);
-		parent::set($this->options);
-		foreach (get_class_methods($this) as $method) {
-			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
-				$this->on($matches[1], [$this, $method]);
-			}
-		}
 	}
 
 	/**
-	 * @return bool|void
-	 */
-	public function start()
-	{
-		//load middlewares
-		if (file_exists($this->options['middlewares'])) {
-			$this->middlewares(...(include $this->options['middlewares'] ?: []));
-		}
-		//append router
-		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));
-		return parent::start();
-	}
-
-	/**
-     * @return mixed|void
-     */
-	public function restart()
-    {
-        $this->stop();
-        sleep(1);
-        $this->start();
-    }
-
-	/**
-	 * @param mixed $offset
-	 * @param mixed $default
-	 * @return mixed
-	 */
-    public function getOptions($offset = null, $default = null)
-	{
-		return is_null($offset) ? $this->options : (isset($this->options[$offset]) ? $this->options[$offset] : $default);
-	}
-
-    /**
 	 * 启动进程数
 	 *
 	 * @return int
@@ -124,7 +88,90 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 				pclose($process);
 			}
 		}
-		return $total > 1 ? intval($total/2) : $total;
+		return $total > 1 ? floor($total/2) : $total;
+	}
+
+	/**
+	 * 获取主进程id
+	 *
+	 * @return bool|string
+	 */
+	public function getMasterId()
+	{
+		if (file_exists($this->options['pid_file'])) {
+			return file_get_contents($this->options['pid_file']);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function start()
+	{
+		$this->pid = fopen($this->options['pid_file'], "c+");
+		if (!$this->pid || !flock($this->pid, LOCK_EX | LOCK_NB)) { //表示程序已启动
+			return false;
+		}
+		parent::__construct($this->options['host'], $this->options['port']);
+		parent::set($this->options);
+		foreach (get_class_methods($this) as $method) {
+			if (preg_match('/^on(\w+)$/i', $method, $matches)) {
+				$this->on($matches[1], [$this, $method]);
+			}
+		}
+		//load middlewares
+		if (file_exists($this->options['middlewares'])) {
+			$this->middlewares(...(include $this->options['middlewares'] ?: []));
+		}
+		//append router
+		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));
+		return parent::start();
+	}
+
+	/**
+	 *
+	 */
+	public function restart()
+	{
+		$this->stop();
+		sleep(1);
+		$this->start();
+	}
+
+	/**
+	 * 停止服务
+	 *
+	 * @param int $worker_id
+	 * @param bool $waitEvent
+	 * @return bool
+	 */
+	public function stop($worker_id = -1, $waitEvent = true)
+	{
+		$id = $this->getMasterId();
+		if ($id && posix_kill($id, SIGTERM)) {
+			unlink($this->options['pid_file']);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 *
+	 */
+	public function onStart()
+	{
+		if (function_exists('cli_set_process_title')) {
+			cli_set_process_title($this->options['name'] . '_master');
+		} else if (function_exists('swoole_set_process_name')) {
+			swoole_set_process_name($this->options['name'] . '_master');
+		} else {
+			trigger_error(__METHOD__ . ' failed. require cli_set_process_title or swoole_set_process_name.');
+		}
+		ftruncate($this->pid, 0);
+		fwrite($this->pid, getmypid());
+		fflush($this->pid);
 	}
 
 	/**
@@ -169,7 +216,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 		} catch (\Throwable $e) {
 			$this->handleException($e);
 			$writer->end();
-        }
+		}
 	}
 
 	/**
@@ -183,7 +230,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			getmypid(),
 			basename($e->getFile()),
 			$e->getLine(),
-			DEBUG ? $e->__toString() : $e->getMessage()
+			DEVELOPMENT ? strval($e) : $e->getMessage()
 		);
 	}
 

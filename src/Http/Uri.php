@@ -159,10 +159,12 @@ class Uri implements UriInterface
 		if (empty($request) || !class_exists('\Swoole\Http\Request') || !($request instanceof \Swoole\Http\Request)) {
 			throw new \InvalidArgumentException('invalid request object', -__LINE__);
 		}
+		$host = isset($request->header['host']) ? $request->header['host'] : '127.0.0.1';
+		$port = isset($request->server['server_port']) ? $request->server['server_port'] : 80;
 		return new static(
 			'http',//@todo
-			isset($request->header['host']) ? $request->header['host'] : '127.0.0.1',
-			isset($request->server['server_port']) ? $request->server['server_port'] : 80,
+			$host,
+			$port,
 			isset($request->server['request_uri']) ? $request->server['request_uri'] : '/',
 			isset($request->server['query_string']) ? $request->server['query_string'] : '',
 			'',
@@ -212,9 +214,8 @@ class Uri implements UriInterface
                 $host = strstr($host, ':', true);
             }
         }
-
         // parse_url() requires a full URL. As we don't extract the domain name or scheme, we use a stand-in.
-        $requestUri = parse_url('http://example.com' . $env->get('REQUEST_URI'), PHP_URL_PATH);
+        $requestUri = parse_url('http://example.com' . $env->get('PATH_INFO', $env->get('REQUEST_URI')), PHP_URL_PATH);
         $requestUri = rawurldecode($requestUri);
 
         // Query string

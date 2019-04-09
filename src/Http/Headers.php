@@ -138,16 +138,10 @@ class Headers extends Collection implements HeadersInterface
         if (!is_array($value)) {
             $value = [$value];
         }
-        /*
         parent::set($this->normalizeKey($key), [
             'value' => $value,
             'originalKey' => $key
         ]);
-        */
-        $this->data[$this->normalizeKey($key)] = [
-			'value' => $value,
-			'originalKey' => $key
-		];
     }
 
     /**

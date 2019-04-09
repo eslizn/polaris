@@ -142,18 +142,17 @@ class Request extends Message implements ServerRequestInterface
         $uri = Uri::createFromGlobals($globals);
         $headers = Headers::createFromGlobals($globals);
         $cookies = Cookies::parse($headers->get('Cookie', []))->cookies;
-        $serverParams = $globals;
-        $body = new RequestBody();
-        $uploadedFiles = UploadedFile::createFromGlobals($globals);
+        $uploadedFiles = UploadedFile::parseUploadedFiles($_FILES);
+        $request = new static($method, $uri, $headers, $cookies, $globals, new RequestBody(), $uploadedFiles);
 
-        $request = new static($method, $uri, $headers, $cookies, $serverParams, $body, $uploadedFiles);
-
-        if ($method === 'POST' &&
-            in_array($request->getMediaType(), ['application/x-www-form-urlencoded', 'multipart/form-data'])
-        ) {
-            // parsed body must be $_POST
-            $request = $request->withParsedBody($_POST);
-        }
+        if (intval(current($headers->get('Content-Length')))) {
+        	if (in_array($request->getMediaType(), ['application/x-www-form-urlencoded', 'multipart/form-data'])) {
+				//parsed body must be $_POST
+				$request = $request->withParsedBody($_POST);
+			} else {
+        		$request = $request->withBody(new RequestBody(file_get_contents("php://input")));
+			}
+		}
         return $request;
     }
 
