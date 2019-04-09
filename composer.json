@@ -1,7 +1,7 @@
 {
   "name": "eslizn/polaris",
   "homepage": "https://github.com/eslizn/polaris",
-  "description": "application framework for php swoole",
+  "description": "app framework for php",
   "type": "library",
   "license": "MIT",
   "authors": [
