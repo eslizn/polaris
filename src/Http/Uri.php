@@ -159,12 +159,13 @@ class Uri implements UriInterface
 		if (empty($request) || !class_exists('\Swoole\Http\Request') || !($request instanceof \Swoole\Http\Request)) {
 			throw new \InvalidArgumentException('invalid request object', -__LINE__);
 		}
-		$host = isset($request->header['host']) ? $request->header['host'] : '127.0.0.1';
-		$port = isset($request->server['server_port']) ? $request->server['server_port'] : 80;
+		if (!isset($request->header['host'])) {
+			$request->header['host'] = '127.0.0.1';
+		}
 		return new static(
 			'http',//@todo
-			$host,
-			$port,
+			substr($request->header['host'], 0, strpos($request->header['host'], ':') ?: strlen($request->header['host'])),
+			isset($request->server['server_port']) ? $request->server['server_port'] : 80,
 			isset($request->server['request_uri']) ? $request->server['request_uri'] : '/',
 			isset($request->server['query_string']) ? $request->server['query_string'] : '',
 			'',
