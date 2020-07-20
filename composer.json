@@ -19,14 +19,15 @@
 	]
   },
   "minimum-stability": "stable",
-  "preferred-install": "dist",
   "require": {
 	"php": ">=7.1",
 	"psr/http-message": "^1.0",
 	"psr/http-server-middleware": "^1.0",
-	"nikic/fast-route": "^1.3"
+	"nikic/fast-route": "^1.3",
+	"ext-json": "*"
   },
   "require-dev": {
-	"eaglewu/swoole-ide-helper": "dev-master"
+	"eaglewu/swoole-ide-helper": "dev-master",
+	"phpunit/phpunit": "^9.2"
   }
 }
