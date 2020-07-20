@@ -1,9 +1,10 @@
 <?php
+
 namespace Polaris\Http\Middlewares;
 
 use Polaris\Http\Exceptions\HttpException;
 use Polaris\Http\Interfaces\RouterInterface;
-use Polaris\Http\Server;
+use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -15,8 +16,6 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class RouterMiddleware implements RouterInterface, MiddlewareInterface
 {
-
-	use MiddlewareTrait;
 
 	/**
 	 * @var string
@@ -61,30 +60,6 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 				$r->addRoute(...$route);
 			}
 		});
-	}
-
-	/**
-	 * @param string $pattern
-	 * @param string $handler
-	 * @param string $name
-	 * @param mixed ...$middleware
-	 * @return static
-	 */
-	public function resource($pattern, $handler, $name = 'id', ...$middleware)
-	{
-		foreach ([
-			 'index' => [['GET'], $pattern],
-			 'create' => [['GET'], sprintf('%s/create', $pattern)],
-			 'store' => [['POST'], $pattern],
-			 'show' => [['GET'], sprintf('%s/{%s}', $pattern, $name)],
-			 'edit' => [['GET'], sprintf('%s/{%s}/edit', $pattern, $name)],
-			 'update' => [['PUT', 'PATCH'], sprintf('%s/{%s}', $pattern, $name)],
-			 'destroy' => [['DELETE'], sprintf('%s/{%s}', $pattern, $name)],
-		 ] as $action => $args) {
-			list($methods, $pattern) = $args;
-			$this->map($methods, $pattern, sprintf('%s@%s', $handler, $action), ...$middleware);
-		}
-		return $this;
 	}
 
 	/**
@@ -246,9 +221,8 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 				if (is_string($handler) && !is_callable($handler)) {
 					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
 				}
-				$dispatcher = new Dispatcher();
-				$dispatcher->middlewares(...$middlewares)
-					->middlewares(new Endpoint($handler));
+				array_push($middlewares, new InvokeMiddleware($handler));
+				$dispatcher = new Stack(new Response(), ...$middlewares);
 				return $dispatcher->handle($request);
 			default:
 				throw new HttpException(500);

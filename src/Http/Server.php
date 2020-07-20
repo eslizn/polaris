@@ -1,8 +1,8 @@
 <?php
 namespace Polaris\Http;
 
-use Polaris\Http\Middlewares\MiddlewareTrait;
 use Polaris\Http\Middlewares\RouterMiddleware;
+use Polaris\Http\Middlewares\Stack;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -14,12 +14,15 @@ use Psr\Http\Server\RequestHandlerInterface;
 class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 {
 
-	use MiddlewareTrait;
-
 	/**
 	 * @var array
 	 */
 	protected $options = [];
+
+	/**
+	 * @var Stack
+	 */
+	protected $dispatcher;
 
 	/**
 	 * Server constructor.
@@ -96,11 +99,13 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	public function start()
 	{
 		//load middlewares
+		$middlewares = [];
 		if (file_exists($this->options['middlewares'])) {
-			$this->middlewares(...(include $this->options['middlewares'] ?: []));
+			array_push($middlewares, ...(include $this->options['middlewares'] ?: []));
 		}
 		//append router
-		$this->middlewares(new RouterMiddleware($this->options['routes'], $this->options['namespace']));
+		array_push($middlewares, new RouterMiddleware($this->options['routes'], $this->options['namespace']));
+		$this->dispatcher = new Stack(new Response(), ...$middlewares);
 		return parent::start();
 	}
 

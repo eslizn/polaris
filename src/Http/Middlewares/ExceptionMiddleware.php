@@ -1,4 +1,5 @@
 <?php
+
 namespace Polaris\Http\Middlewares;
 
 use Polaris\Http\Exceptions\HttpException;
@@ -27,7 +28,7 @@ class ExceptionMiddleware implements MiddlewareInterface
 		} catch (HttpException $e) {
 			return new Response($e->getStatusCode(), null, $e->getStatusText());
 		} catch (\Throwable $e) {
-			return new Response(500, null, DEBUG ? $e->__toString() : $e->getMessage());
+			return new Response(500, null, strcasecmp(ENVIRONMENT, 'production') ? $e->__toString() : $e->getMessage());
 		}
 	}
 

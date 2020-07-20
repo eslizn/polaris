@@ -1,20 +1,25 @@
 <?php
+
 namespace Polaris\Http\Middlewares;
 
+use Polaris\Http\Exceptions\HttpException;
 use Polaris\Http\Headers;
 use Polaris\Http\Request;
 use Polaris\Http\Response;
-use Polaris\Http\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use ReflectionFunctionAbstract;
+use ReflectionClass;
+use ReflectionFunction;
+use ReflectionException;
 
 /**
- * Class Endpoint
+ * Class InvokeMiddleware
  * @package Polaris\Http\Middlewares
  */
-class Endpoint implements RequestHandlerInterface, MiddlewareInterface
+class InvokeMiddleware implements MiddlewareInterface
 {
 
 	/**
@@ -23,8 +28,8 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 	protected $callable;
 
 	/**
-	 * CallableMiddleware constructor.
-	 * @param string $callable
+	 * InvokeMiddleware constructor.
+	 * @param mixed $callable
 	 */
 	public function __construct($callable)
 	{
@@ -35,17 +40,9 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 	 * @param ServerRequestInterface $request
 	 * @param RequestHandlerInterface $handler
 	 * @return ResponseInterface
+	 * @throws ReflectionException
 	 */
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-	{
-		return $this->handle($request);
-	}
-
-	/**
-	 * @param ServerRequestInterface $request
-	 * @return ResponseInterface
-	 */
-	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
 		$response = null;
 		if (is_string($this->callable) && !is_callable($this->callable)) {
@@ -53,7 +50,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 			if (!class_exists($class)) {
 				throw new HttpException(404);
 			}
-			$reflect = new \ReflectionClass($class);
+			$reflect = new ReflectionClass($class);
 			$arguments = $reflect->getConstructor() ? static::parseArguments($reflect->getConstructor(), $request) : [];
 			$class = new $class(...$arguments);
 			if (!$reflect->hasMethod($method)) {
@@ -65,7 +62,7 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 			if (!is_callable($this->callable)) {
 				throw new HttpException(500);
 			}
-			$arguments = static::parseArguments(new \ReflectionFunction($this->callable), $request);
+			$arguments = static::parseArguments(new ReflectionFunction($this->callable), $request);
 			$response = ($this->callable)(...$arguments);
 		}
 		if (is_null($response)) {
@@ -80,11 +77,12 @@ class Endpoint implements RequestHandlerInterface, MiddlewareInterface
 	}
 
 	/**
-	 * @param \ReflectionFunctionAbstract $abstract
+	 * @param ReflectionFunctionAbstract $abstract
 	 * @param ServerRequestInterface $request
 	 * @return array
+	 * @throws ReflectionException
 	 */
-	protected static function parseArguments(\ReflectionFunctionAbstract $abstract, ServerRequestInterface $request)
+	protected static function parseArguments(ReflectionFunctionAbstract $abstract, ServerRequestInterface $request)
 	{
 		$arguments = [];
 		foreach ($abstract->getParameters() as $p) {
