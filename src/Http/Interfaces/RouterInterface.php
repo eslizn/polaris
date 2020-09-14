@@ -1,8 +1,6 @@
 <?php
 namespace Polaris\Http\Interfaces;
 
-use Psr\Http\Message\ServerRequestInterface;
-
 /**
  * Interface RouterInterface
  *
@@ -19,15 +17,6 @@ interface RouterInterface
 	 * @return static
 	 */
 	public function map($methods, $pattern, $handler, ...$middleware);
-
-	/**
-	 * @param string $pattern
-	 * @param string $handler
-	 * @param string $name
-	 * @param mixed ...$middleware
-	 * @return static
-	 */
-	public function resource($pattern, $handler, $name = 'id', ...$middleware);
 
 	/**
 	 * @param string $pattern

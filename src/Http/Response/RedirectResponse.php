@@ -1,7 +1,6 @@
 <?php
 namespace Polaris\Http\Response;
 
-use Polaris\Http\HeadersInterface;
 use Polaris\Http\Response;
 
 /**

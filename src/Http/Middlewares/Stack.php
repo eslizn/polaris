@@ -43,7 +43,7 @@ class Stack implements RequestHandlerInterface
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
 		return sizeof($this->middlewares) ?
-			$this->normal($this->middlewares[0])->process($request, $this->next()) :
+			static::normal($this->middlewares[0])->process($request, $this->next()) :
 			$this->response;
 	}
 
@@ -59,7 +59,7 @@ class Stack implements RequestHandlerInterface
 	 * @param mixed $middleware
 	 * @return MiddlewareInterface
 	 */
-	private function normal($middleware): MiddlewareInterface {
+	private static function normal($middleware): MiddlewareInterface {
 		if (is_string($middleware)) {
 			if (!class_exists($middleware)) {
 				throw new InvalidArgumentException(sprintf('invalid middleware: %s', $middleware), -__LINE__);
