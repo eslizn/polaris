@@ -1,8 +1,8 @@
 <?php
 
-namespace Polaris\Http\Middlewares;
+namespace Polaris\Http\Middleware;
 
-use Polaris\Http\Exceptions\HttpException;
+use Polaris\Http\Exception\HttpException;
 use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

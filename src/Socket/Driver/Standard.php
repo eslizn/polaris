@@ -1,6 +1,6 @@
 <?php
 
-namespace Polaris\Socket\Drivers;
+namespace Polaris\Socket\Driver;
 
 use Polaris\Socket\Exception\SocketException;
 use Polaris\Socket\Socket;

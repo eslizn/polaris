@@ -1,10 +1,10 @@
 <?php
 
-namespace Polaris\Http\Middlewares;
+namespace Polaris\Http\Middleware;
 
 use FastRoute\Dispatcher;
-use Polaris\Http\Exceptions\HttpException;
-use Polaris\Http\Exceptions\InvalidArgumentException;
+use Polaris\Http\Exception\HttpException;
+use Polaris\Http\Exception\InvalidArgumentException;
 use Polaris\Http\RouterInterface;
 use Polaris\Http\Middleware;
 use Polaris\Http\Response;

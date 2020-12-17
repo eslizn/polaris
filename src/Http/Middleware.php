@@ -2,7 +2,7 @@
 
 namespace Polaris\Http;
 
-use Polaris\Http\Exceptions\InvalidArgumentException;
+use Polaris\Http\Exception\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

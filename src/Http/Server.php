@@ -1,7 +1,7 @@
 <?php
 namespace Polaris\Http;
 
-use Polaris\Http\Middlewares\RouterMiddleware;
+use Polaris\Http\Middleware\RouterMiddleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -172,7 +172,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	/**
 	 * @param ServerRequestInterface $request
 	 * @return ResponseInterface
-	 * @throws Exceptions\InvalidArgumentException
+	 * @throws Exception\InvalidArgumentException
 	 */
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{

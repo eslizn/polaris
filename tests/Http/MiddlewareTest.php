@@ -2,7 +2,7 @@
 
 namespace Tests\Http;
 
-use Polaris\Http\Exceptions\InvalidArgumentException;
+use Polaris\Http\Exception\InvalidArgumentException;
 use Polaris\Http\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

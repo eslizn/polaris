@@ -97,7 +97,7 @@ class Factory
 	 */
 	protected static function getSocketClass()
 	{
-		return sprintf('\\%s\\Drivers\\%s', __NAMESPACE__, static::inCoroutine() ? 'Swoole' : 'Standard');
+		return sprintf('\\%s\\Driver\\%s', __NAMESPACE__, static::inCoroutine() ? 'Swoole' : 'Standard');
 	}
 
 }
