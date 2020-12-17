@@ -2,6 +2,7 @@
 
 namespace Tests\Http;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Polaris\Http\Exception\InvalidArgumentException;
 use Polaris\Http\Middleware;
 use Psr\Http\Message\ResponseInterface;
