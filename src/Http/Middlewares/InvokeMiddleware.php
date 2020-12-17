@@ -40,7 +40,7 @@ class InvokeMiddleware implements MiddlewareInterface
 	 * @param ServerRequestInterface $request
 	 * @param RequestHandlerInterface $handler
 	 * @return ResponseInterface
-	 * @throws ReflectionException
+	 * @throws ReflectionException|HttpException
 	 */
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
@@ -70,7 +70,7 @@ class InvokeMiddleware implements MiddlewareInterface
 		} else if (is_scalar($response)) {
 			return new Response(200, new Headers(['Content-Type' => 'text/plain']), $response);
 		} else if (is_array($response) || (is_object($response) && $response instanceof \JsonSerializable)) {
-			return new Response\JsonResponse($response);
+			return (new Response)->withJson($response);
 		} else {
 			return $response;
 		}

@@ -118,7 +118,7 @@ class Request extends Message implements ServerRequestInterface
 			Headers::createFromSwoole($request),
 			$request->cookie ? $request->cookie : [],
 			array_change_key_case($request->server, CASE_UPPER),
-			new RequestBody($request->rawContent()),
+			new Body($request->rawContent()),
 			$request->files ? UploadedFile::parseUploadedFiles($request->files) : []
 		);
 		if ($request->post) {
@@ -143,14 +143,14 @@ class Request extends Message implements ServerRequestInterface
         $headers = Headers::createFromGlobals($globals);
         $cookies = Cookies::parse($headers->get('Cookie', []))->cookies;
         $uploadedFiles = UploadedFile::parseUploadedFiles($_FILES);
-        $request = new static($method, $uri, $headers, $cookies, $globals, new RequestBody(), $uploadedFiles);
+        $request = new static($method, $uri, $headers, $cookies, $globals, new Body(), $uploadedFiles);
 
         if (intval(current($headers->get('Content-Length')))) {
         	if (in_array($request->getMediaType(), ['application/x-www-form-urlencoded', 'multipart/form-data'])) {
 				//parsed body must be $_POST
 				$request = $request->withParsedBody($_POST);
 			} else {
-        		$request = $request->withBody(new RequestBody(file_get_contents("php://input")));
+        		$request = $request->withBody(new Body(file_get_contents("php://input")));
 			}
 		}
         return $request;

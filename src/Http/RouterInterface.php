@@ -1,10 +1,10 @@
 <?php
-namespace Polaris\Http\Interfaces;
+namespace Polaris\Http;
 
 /**
  * Interface RouterInterface
  *
- * @package Polaris\Http\Interfaces
+ * @package Polaris\Http
  */
 interface RouterInterface
 {

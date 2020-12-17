@@ -5,7 +5,7 @@ namespace Polaris\Http\Middlewares;
 use FastRoute\Dispatcher;
 use Polaris\Http\Exceptions\HttpException;
 use Polaris\Http\Exceptions\InvalidArgumentException;
-use Polaris\Http\Interfaces\RouterInterface;
+use Polaris\Http\RouterInterface;
 use Polaris\Http\Middleware;
 use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -15,6 +15,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * Class RouterMiddleware
+ *
  * @package Polaris\Http\Middlewares
  */
 class RouterMiddleware implements RouterInterface, MiddlewareInterface
@@ -55,7 +56,7 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 		$this->namespace = $namespace;
 		if (file_exists($routes)) {
 			(function ($router) use ($routes) {
-				include ($routes);
+				include $routes;
 			})($this);
 		}
 		$this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $r) {

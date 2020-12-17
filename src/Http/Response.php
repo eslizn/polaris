@@ -123,6 +123,17 @@ class Response extends Message implements ResponseInterface
 		599 => 'Network Connect Timeout Error',
 	];
 
+	/**
+	 * get status text for code
+	 *
+	 * @param mixed $status
+	 * @return mixed|string|null
+	 */
+	public static function getStatusText($status = null)
+	{
+		return isset(static::$messages[$status]) ? static::$messages[$status] : null;
+	}
+
     /**
      * Create new HTTP response.
      *
@@ -320,20 +331,19 @@ class Response extends Message implements ResponseInterface
 		return $clone;
 	}
 
-    /**
-     * Json.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * This method prepares the response object to return an HTTP Json
-     * response to the client.
-     *
-     * @param  mixed  $data   The data
-     * @param  int    $status The HTTP status code.
-     * @param  int    $encodingOptions Json encoding options
-     * @throws \RuntimeException
-     * @return static
-     */
+	/**
+	 * Json.
+	 *
+	 * Note: This method is not part of the PSR-7 standard.
+	 *
+	 * This method prepares the response object to return an HTTP Json
+	 * response to the client.
+	 *
+	 * @param mixed $data The data
+	 * @param null $status The HTTP status code.
+	 * @param int $encodingOptions Json encoding options
+	 * @return static
+	 */
     public function withJson($data, $status = null, $encodingOptions = 0)
     {
         $response = $this->withBody(new Body(fopen('php://temp', 'r+')));
@@ -481,21 +491,20 @@ class Response extends Message implements ResponseInterface
      */
     public function __toString()
     {
-    	/*
         $output = sprintf(
             'HTTP/%s %s %s',
             $this->getProtocolVersion(),
             $this->getStatusCode(),
             $this->getReasonPhrase()
         );
-        $output .= Response::EOL;
+        $output .= static::EOL;
         foreach ($this->getHeaders() as $name => $values) {
-            $output .= sprintf('%s: %s', $name, $this->getHeaderLine($name)) . Response::EOL;
+            $output .= sprintf('%s: %s', $name, $this->getHeaderLine($name)) . static::EOL;
         }
-        $output .= Response::EOL;
+        $output .= static::EOL;
         $output .= (string)$this->getBody();
-		*/
-        return $this->getBody()->getSize() ? $this->getBody()->getContents() : '';
+		return $output;
+        //return $this->getBody()->getSize() ? $this->getBody()->getContents() : '';
     }
     
 }

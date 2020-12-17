@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Throwable;
 
 /**
  * Class ExceptionMiddleware
@@ -27,8 +28,8 @@ class ExceptionMiddleware implements MiddlewareInterface
 			return $handler->handle($request);
 		} catch (HttpException $e) {
 			return new Response($e->getStatusCode(), null, $e->getStatusText());
-		} catch (\Throwable $e) {
-			return new Response(500, null, strcasecmp(ENVIRONMENT, 'production') ? $e->__toString() : $e->getMessage());
+		} catch (Throwable $e) {
+			return new Response(500, null, $e->__toString());
 		}
 	}
 

@@ -138,13 +138,13 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 				$writer->header('Server', 'Polaris');
 			}
 			if ($response->getBody()->getSize()) {
-				if ($response instanceof Response\FileResponse) {
-					$file = $response->getBody()->getContents();
-					$writer->sendfile($file);//sendfile will end
-				} else {
+//				if ($response instanceof Response\FileResponse) {
+//					$file = $response->getBody()->getContents();
+//					$writer->sendfile($file);//sendfile will end
+//				} else {
 					$writer->write($response->getBody()->getContents());
 					$writer->end();
-				}
+//				}
 			} else {
 				$writer->end();
 			}

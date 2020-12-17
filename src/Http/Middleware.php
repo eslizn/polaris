@@ -44,7 +44,7 @@ class Middleware implements RequestHandlerInterface
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
 		return sizeof($this->middleware) ?
-			static::normal($this->middleware[0])->process($request, $this->next()) :
+			static::format($this->middleware[0])->process($request, $this->next()) :
 			$this->response;
 	}
 
@@ -61,7 +61,7 @@ class Middleware implements RequestHandlerInterface
 	 * @return MiddlewareInterface
 	 * @throws InvalidArgumentException
 	 */
-	private static function normal($middleware): MiddlewareInterface {
+	private static function format($middleware): MiddlewareInterface {
 		if (is_string($middleware)) {
 			if (!class_exists($middleware)) {
 				throw new InvalidArgumentException(sprintf('invalid middleware: %s', $middleware), -__LINE__);
