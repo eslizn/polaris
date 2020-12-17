@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Http\Middlewares;
+namespace Tests\Http;
 
 use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -10,7 +10,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * Class DebugMiddleware
- * @package App\Tests\Http\Middlewares
+ * @package Tests\Http
  */
 class DebugMiddleware implements MiddlewareInterface
 {

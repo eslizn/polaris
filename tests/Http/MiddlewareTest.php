@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Tests\Http\Middlewares;
+namespace Tests\Http;
 
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Polaris\Http\Middlewares\Stack;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Class StackTest
- * @package App\Tests\Http\Middlewares
+ * Class MiddlewareTest
+ * @package Tests\Http
  */
-class StackTest extends TestCase
+class MiddlewareTest extends TestCase
 {
 
 	/**
