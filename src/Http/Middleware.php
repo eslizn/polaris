@@ -1,24 +1,24 @@
 <?php
 
-namespace Polaris\Http\Middlewares;
+namespace Polaris\Http;
 
+use Polaris\Http\Exceptions\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use InvalidArgumentException;
 
 /**
- * Class Stack
- * @package Polaris\Http\Middlewares
+ * Class Middleware
+ * @package Polaris\Http
  */
-class Stack implements RequestHandlerInterface
+class Middleware implements RequestHandlerInterface
 {
 
 	/**
 	 * @var MiddlewareInterface[]
 	 */
-	protected $middlewares = [];
+	protected $middleware = [];
 
 	/**
 	 * @var ResponseInterface
@@ -26,24 +26,25 @@ class Stack implements RequestHandlerInterface
 	protected $response;
 
 	/**
-	 * Stack constructor.
+	 * Middleware constructor.
 	 * @param ResponseInterface $response
-	 * @param mixed ...$middlewares
+	 * @param mixed ...$middleware
 	 */
-	public function __construct(ResponseInterface $response, ...$middlewares)
+	public function __construct(ResponseInterface $response, ...$middleware)
 	{
 		$this->response = $response;
-		$this->middlewares = $middlewares;
+		$this->middleware = $middleware;
 	}
 
 	/**
 	 * @param ServerRequestInterface $request
 	 * @return ResponseInterface
+	 * @throws InvalidArgumentException
 	 */
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
-		return sizeof($this->middlewares) ?
-			static::normal($this->middlewares[0])->process($request, $this->next()) :
+		return sizeof($this->middleware) ?
+			static::normal($this->middleware[0])->process($request, $this->next()) :
 			$this->response;
 	}
 
@@ -52,12 +53,13 @@ class Stack implements RequestHandlerInterface
 	 */
 	private function next(): RequestHandlerInterface
 	{
-		return new static($this->response, ...(array_slice($this->middlewares, 1) ?: []));
+		return new static($this->response, ...(array_slice($this->middleware, 1) ?: []));
 	}
 
 	/**
 	 * @param mixed $middleware
 	 * @return MiddlewareInterface
+	 * @throws InvalidArgumentException
 	 */
 	private static function normal($middleware): MiddlewareInterface {
 		if (is_string($middleware)) {

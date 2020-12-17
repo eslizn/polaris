@@ -1,12 +1,14 @@
 <?php
 namespace Polaris\Http\Exceptions;
 
+use Polaris\Exception;
+
 /**
  * Class HttpException
  *
  * @package Polaris\Http\Exceptions
  */
-class HttpException extends \RuntimeException
+class HttpException extends Exception
 {
 
 	/**

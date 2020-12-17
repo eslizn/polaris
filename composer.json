@@ -18,16 +18,26 @@
 	  "helpers.php"
 	]
   },
+  "autoload-dev": {
+	"psr-4": {
+	  "Tests\\": "tests/"
+	},
+	"files": [
+	  "helpers.php"
+	]
+  },
   "minimum-stability": "stable",
   "require": {
 	"php": ">=7.1",
 	"psr/http-message": "^1.0",
 	"psr/http-server-middleware": "^1.0",
 	"nikic/fast-route": "^1.3",
-	"ext-json": "*"
+	"psr/log": "^1.0",
+	"ext-json": "*",
+	"ext-pdo": "*"
   },
   "require-dev": {
 	"eaglewu/swoole-ide-helper": "dev-master",
-	"phpunit/phpunit": "^9.2"
+	"phpunit/phpunit": "^9.5"
   }
 }

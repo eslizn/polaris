@@ -2,8 +2,11 @@
 
 namespace Polaris\Http\Middlewares;
 
+use FastRoute\Dispatcher;
 use Polaris\Http\Exceptions\HttpException;
+use Polaris\Http\Exceptions\InvalidArgumentException;
 use Polaris\Http\Interfaces\RouterInterface;
+use Polaris\Http\Middleware;
 use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,7 +36,7 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 	protected $groupMiddleware = [];
 
 	/**
-	 * @var \FastRoute\Dispatcher
+	 * @var Dispatcher
 	 */
 	protected $dispatcher = null;
 
@@ -206,23 +209,24 @@ class RouterMiddleware implements RouterInterface, MiddlewareInterface
 	 * @param ServerRequestInterface $request
 	 * @param RequestHandlerInterface $handler
 	 * @return ResponseInterface
+	 * @throws InvalidArgumentException|HttpException
 	 */
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
 		$route = $this->dispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
 		switch ($route[0]) {
-			case \FastRoute\Dispatcher::NOT_FOUND:
+			case Dispatcher::NOT_FOUND:
 				throw new HttpException(404);
-			case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
+			case Dispatcher::METHOD_NOT_ALLOWED:
 				throw new HttpException(405);
-			case \FastRoute\Dispatcher::FOUND:
+			case Dispatcher::FOUND:
 				$request = $request->withQueryParams(array_merge($request->getQueryParams(), $route[2]));
 				list($handler, $middlewares) = $route[1];
 				if (is_string($handler) && !is_callable($handler)) {
 					$handler = sprintf('%s\\Http\\Controllers\\%s', $this->namespace, $handler);
 				}
 				array_push($middlewares, new InvokeMiddleware($handler));
-				$dispatcher = new Stack(new Response(), ...$middlewares);
+				$dispatcher = new Middleware(new Response(), ...$middlewares);
 				return $dispatcher->handle($request);
 			default:
 				throw new HttpException(500);

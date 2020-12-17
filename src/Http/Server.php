@@ -2,10 +2,10 @@
 namespace Polaris\Http;
 
 use Polaris\Http\Middlewares\RouterMiddleware;
-use Polaris\Http\Middlewares\Stack;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Throwable;
 
 /**
  * Class Server
@@ -20,7 +20,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	protected $options = [];
 
 	/**
-	 * @var Stack
+	 * @var Middleware
 	 */
 	protected $dispatcher;
 
@@ -101,11 +101,11 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 		//load middlewares
 		$middlewares = [];
 		if (file_exists($this->options['middlewares'])) {
-			array_push($middlewares, ...(include $this->options['middlewares'] ?: []));
+			array_push($middlewares, ...(include $this->options['middlewares']) ?: []);
 		}
 		//append router
 		array_push($middlewares, new RouterMiddleware($this->options['routes'], $this->options['namespace']));
-		$this->dispatcher = new Stack(new Response(), ...$middlewares);
+		$this->dispatcher = new Middleware(new Response(), ...$middlewares);
 		return parent::start();
 	}
 
@@ -148,17 +148,17 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 			} else {
 				$writer->end();
 			}
-		} catch (\Throwable $e) {
+		} catch (Throwable $e) {
 			$this->handleException($e);
 			$writer->end();
 		}
 	}
 
 	/**
-	 * @param \Throwable $e
-	 * @return ResponseInterface
+	 * @param Throwable $e
+	 * @return void
 	 */
-	public function handleException(\Throwable $e)
+	public function handleException(Throwable $e)
 	{
 		printf("[%s # %d][%s:%d]%s\n",
 			date('Y-m-d H:i:s'),
@@ -172,6 +172,7 @@ class Server extends \Swoole\Http\Server implements RequestHandlerInterface
 	/**
 	 * @param ServerRequestInterface $request
 	 * @return ResponseInterface
+	 * @throws Exceptions\InvalidArgumentException
 	 */
 	public function handle(ServerRequestInterface $request): ResponseInterface
 	{
