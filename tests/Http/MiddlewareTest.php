@@ -2,6 +2,8 @@
 
 namespace Tests\Http;
 
+use Polaris\Http\Exceptions\InvalidArgumentException;
+use Polaris\Http\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -20,18 +22,19 @@ class MiddlewareTest extends TestCase
 	public function testImplementation()
 	{
 		$response = $this->getResponseMock();
-		$this->assertInstanceOf(RequestHandlerInterface::class, new Stack($response));
+		$this->assertInstanceOf(RequestHandlerInterface::class, new Middleware($response));
 	}
 
 	/**
 	 *
+	 * @throws InvalidArgumentException
 	 */
 	public function testServerMiddlewareStack()
 	{
 		$serverRequest = $this->getServerRequestMock();
 		$response = $this->getResponseMock();
 
-		$stack = new Stack($response, new DebugMiddleware("m1"), new DebugMiddleware("m2"), new DebugMiddleware("m3"));
+		$stack = new Middleware($response, new DebugMiddleware("m1"), new DebugMiddleware("m2"), new DebugMiddleware("m3"));
 		$stackResponse = $stack->handle($serverRequest);
 
 		$this->assertInstanceOf(ResponseInterface::class, $stackResponse);
