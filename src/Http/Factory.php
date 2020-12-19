@@ -27,7 +27,7 @@ class Factory
 	 */
 	protected static function getServerClass()
 	{
-		return sprintf('\\%s\\Server\\%s', __NAMESPACE__, class_exists('\Swoole\Http\Server') ? 'Swoole' : 'Standard');
+		return sprintf('\\%s\\Server\\%s', __NAMESPACE__, strcasecmp(php_sapi_name(), 'cli') ? 'Standard' : 'Swoole');
 	}
 
 }
