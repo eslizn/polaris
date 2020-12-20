@@ -42,7 +42,7 @@ class Swoole extends \Swoole\Http\Server implements Server
 			'workspace' => $workspace,
 			'http_gzip_level' => 0,
 			'http_compression' => false,
-			'pid_file' => sprintf('/var/run/%s_master.pid', basename($workspace)),
+			//'pid_file' => sprintf('/var/run/%s_master.pid', basename($workspace)),
 			//'log_file' => sprintf('%s/log/%s.log', $workspace, basename($workspace)),
 			'host' => '127.0.0.1',
 			'port' => 0,
