@@ -1,7 +1,6 @@
 <?php
 namespace Polaris\Http\Exception;
 
-use Polaris\Exception;
 use Polaris\Http\Response;
 
 /**
