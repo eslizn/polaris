@@ -164,7 +164,7 @@ class Swoole extends \Swoole\Http\Server implements Server
 			getmypid(),
 			basename($e->getFile()),
 			$e->getLine(),
-			strval($e)
+			$e->getMessage()
 		);
 	}
 
