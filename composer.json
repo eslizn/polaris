@@ -35,7 +35,8 @@
 	"psr/log": "^1.0",
 	"ext-json": "*",
 	"ext-pdo": "*",
-	"ext-sockets": "*"
+	"ext-sockets": "*",
+	"ext-gmp": "*"
   },
   "require-dev": {
 	"eaglewu/swoole-ide-helper": "dev-master",
