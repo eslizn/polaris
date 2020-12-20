@@ -2,13 +2,16 @@
 
 namespace Polaris\Socket;
 
+use Polaris\Socket\Driver\Standard;
+use Polaris\Socket\Driver\Swoole;
 use Polaris\Socket\Exception\InvalidArgumentException;
+use Throwable;
 
 /**
  * Class Factory
  * @package Polaris\Socket
  */
-class Factory
+abstract class Factory
 {
 
 	/**
@@ -26,78 +29,32 @@ class Factory
 	];
 
 	/**
-	 * @param string $address
+	 * @param mixed $address
+	 * @param mixed $driver
 	 * @return Socket
-	 * @throws \Throwable
 	 */
-	public static function createServer($address)
-	{
-		$socket = static::createFromScheme($address);
-		try {
-			$socket->bind($address);
-			if (in_array($socket->getType(), [SOCK_STREAM, SOCK_SEQPACKET])) {
-				$socket->listen();
-			}
-			return $socket;
-		} catch (\Throwable $e) {
-			$socket->close();
-			throw $e;
-		}
-	}
+	abstract public static function create($address, $driver = null);
 
 	/**
-	 * @param string $address
+	 * @param mixed $address
+	 * @param mixed $driver
 	 * @return Socket
-	 * @throws \Throwable
-	 */
-	public static function createClient($address)
-	{
-		$socket = static::createFromScheme($address);
-		try {
-			return $socket->connect($address);
-		} catch (\Throwable $e) {
-			$socket->close();
-			throw $e;
-		}
-	}
-
-	/**
-	 * @param string $address
-	 * @return Socket
+	 * @throws Exception\SocketException
 	 * @throws InvalidArgumentException
 	 */
-	public static function createFromScheme(&$address)
+	protected static function createFromScheme(&$address, $driver = null)
 	{
+		if (is_null($driver)) {
+			$driver = class_exists('\Swoole\Coroutine') && \Swoole\Coroutine::getuid() ? Swoole::class : Standard::class;
+		}
 		$parsed = parse_url($address);
 		if (!isset($parsed['scheme']) || !isset(static::$schemes[$parsed['scheme']])) {
 			throw new InvalidArgumentException('unsupported scheme ' . $parsed['scheme'], -__LINE__);
 		}
 		$address = isset($parsed['host']) ? $parsed['host'] : '';
 		$address .= isset($parsed['port']) ? ':' . $parsed['port'] : '';
-		$class = static::getSocketClass();
-		$object = new $class();
+		$object = new $driver();
 		return $object->create(...static::$schemes[$parsed['scheme']]);
-	}
-
-	/**
-	 * check is coroutine env
-	 *
-	 * @return bool
-	 */
-	protected static function inCoroutine()
-	{
-		return class_exists('\Swoole\Coroutine')
-			&& \Swoole\Coroutine::getuid() >= 0;
-	}
-
-	/**
-	 * auto detector driver
-	 *
-	 * @return string
-	 */
-	protected static function getSocketClass()
-	{
-		return sprintf('\\%s\\Driver\\%s', __NAMESPACE__, static::inCoroutine() ? 'Swoole' : 'Standard');
 	}
 
 }
