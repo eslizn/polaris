@@ -2,6 +2,7 @@
 
 namespace Polaris\Db\Driver;
 
+use PDOStatement;
 use Polaris\Db\Driver;
 use Polaris\Db\Exception\Exception;
 use Polaris\Db\Exception\InvalidArgumentException;
@@ -20,18 +21,22 @@ class Pdo extends \PDO implements Driver
 	 */
 	protected $statements = [];
 
+	/**
+	 * Pdo constructor.
+	 * @param array $options
+	 */
+	public function __construct($options = [])
+	{
+		parent::__construct($options['dsn'], $options['user'], $options['password'], [
+			\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+		]);
+	}
 
-//	public function __construct($dsn, LoggerInterface $logger = null)
-//	{
-//		parent::__construct($dsn, $username, $passwd, [
-//			\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
-//		]);
-//	}
 
 	/**
 	 * @param string $sql
 	 * @param array $args
-	 * @return bool|mixed|\PDOStatement
+	 * @return bool|mixed|PDOStatement
 	 * @throws InvalidArgumentException
 	 */
 	public function prepare($sql, &$args = [])

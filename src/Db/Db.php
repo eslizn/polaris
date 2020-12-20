@@ -19,9 +19,20 @@ class Db
 	 */
 	protected $driver = null;
 
-	public function __construct()
+	/**
+	 * @var array
+	 */
+	protected $options = [];
+
+	/**
+	 * Db constructor.
+	 * @param mixed $driver
+	 * @param array $options
+	 */
+	public function __construct($driver, $options = [])
 	{
-		//@todo
+		$this->driver = $driver;
+		$this->options = $options;
 	}
 
 	/**
@@ -29,8 +40,8 @@ class Db
 	 */
 	public function getDriver()
 	{
-		if (!$this->driver) {
-
+		if (!is_object($this->driver)) {
+			$this->driver = new ($this->driver)($this->options);
 		}
 		return $this->driver;
 	}
