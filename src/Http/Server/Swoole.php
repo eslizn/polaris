@@ -159,13 +159,13 @@ class Swoole extends \Swoole\Http\Server implements Server
 	 */
 	public function handleException(Throwable $e)
 	{
-		printf("[%s # %d][%s:%d]%s\n",
+		file_put_contents('php://stderr', sprintf("[%s # %d][%s:%d]%s\n",
 			date('Y-m-d H:i:s'),
 			getmypid(),
 			basename($e->getFile()),
 			$e->getLine(),
 			$e->getMessage()
-		);
+		), FILE_APPEND);
 	}
 
 }
