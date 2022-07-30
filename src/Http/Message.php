@@ -16,6 +16,17 @@ abstract class Message implements MessageInterface
      */
     protected string $version = '1.1';
 
+	/**
+	 * @var Headers|null
+	 */
+	protected ?Headers $headers = null;
+
+	/**
+	 *
+	 * @var StreamInterface|null
+	 */
+	protected ?StreamInterface $body;
+
     /**
      * @return string
      */
@@ -35,48 +46,94 @@ abstract class Message implements MessageInterface
         return $clone;
     }
 
-    public function getHeaders()
-    {
-        // TODO: Implement getHeaders() method.
+	/**
+	 * @return array
+	 */
+    public function getHeaders(): array
+	{
+        return $this->headers ? $this->headers->jsonSerialize() : [];
     }
 
-    public function hasHeader($name)
-    {
-        // TODO: Implement hasHeader() method.
+	/**
+	 * @param string $name
+	 * @return bool
+	 */
+    public function hasHeader($name): bool
+	{
+        return isset($this->headers[$name]);
     }
 
-    public function getHeader($name)
-    {
-        // TODO: Implement getHeader() method.
+	/**
+	 * @param string $name
+	 * @return array|null
+	 */
+    public function getHeader($name): ?array
+	{
+        return $this->headers[$name] ?? null;
     }
 
-    public function getHeaderLine($name)
-    {
-        // TODO: Implement getHeaderLine() method.
+	/**
+	 * @param string $name
+	 * @return string
+	 */
+    public function getHeaderLine($name): string
+	{
+        return implode(', ', $this->headers[$name] ?? []);
     }
 
-    public function withHeader($name, $value)
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return static
+	 */
+    public function withHeader($name, $value): self
     {
-        // TODO: Implement withHeader() method.
+		$clone = clone $this;
+        unset($clone->headers[$name]);
+		$clone->headers[$name] = $value;
+		return $clone;
     }
 
-    public function withAddedHeader($name, $value)
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return static
+	 */
+    public function withAddedHeader($name, $value): self
     {
-        // TODO: Implement withAddedHeader() method.
+		$clone = clone $this;
+		$clone->headers[$name] = $value;
+		return $clone;
     }
 
-    public function withoutHeader($name)
+	/**
+	 * @param string $name
+	 * @return static
+	 */
+    public function withoutHeader($name): self
     {
-        // TODO: Implement withoutHeader() method.
+		$clone = clone $this;
+		unset($clone->headers[$name]);
+		return $clone;
     }
 
-    public function getBody()
-    {
-        // TODO: Implement getBody() method.
+	/**
+	 * @return StreamInterface|null
+	 */
+    public function getBody(): ?StreamInterface
+	{
+        return $this->body;
     }
 
-    public function withBody(StreamInterface $body)
+	/**
+	 * @param StreamInterface $body
+	 * @return static
+	 */
+    public function withBody(StreamInterface $body): self
     {
-        // TODO: Implement withBody() method.
+		$clone = clone $this;
+		$clone->body = $body;
+		return $this;
     }
+
 }
