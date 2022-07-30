@@ -4,3 +4,4 @@
 *.lock
 *.bat
 *.bak
+/.phpunit.result.cache
