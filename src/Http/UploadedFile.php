@@ -208,7 +208,6 @@ class UploadedFile implements UploadedFileInterface
      *
      * @param string $targetPath Path to which to move the uploaded file.
      *
-     * @throws InvalidArgumentException if the $path specified is invalid.
      * @throws Exception on any error during the move operation, or on
      *     the second or subsequent call to the method.
      */
