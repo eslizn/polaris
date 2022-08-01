@@ -27,18 +27,28 @@
     ]
   },
   "minimum-stability": "stable",
+  "prefer-stable": true,
   "require": {
     "php": "^7.4",
     "psr/container": "^1",
     "psr/event-dispatcher": "^1",
     "psr/http-server-middleware": "^1",
     "psr/http-factory": "^1",
+    "psr/http-client": "^1",
     "psr/log": "^1",
-    "ext-json": "*"
+    "php-http/httplug": "^2.3",
+    "ext-json": "*",
+    "ext-sockets": "*",
+    "ext-curl": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9",
     "vlucas/phpdotenv": "^5",
     "swoole/ide-helper": "dev-master"
+  },
+  "provide": {
+    "php-http/client-implementation": "1.0",
+    "php-http/async-client-implementation": "1.0",
+    "psr/http-client-implementation": "1.0"
   }
 }
