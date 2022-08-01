@@ -19,7 +19,7 @@ class ClientTest extends TestCase
 
     /**
      * @return void
-     * @throws \Polaris\Http\Client\Exception
+     * @throws Exception
      */
     public function testHandle()
     {
@@ -51,12 +51,12 @@ class ClientTest extends TestCase
         $request = new Request('GET', UriFactory::createFromString('https://www.qq.com/'));
         $promise = (new Client())->sendAsyncRequest($request);
         $response = $promise->wait();
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     /**
      * @return void
-     * @throws \Polaris\Http\Client\Exception
+     * @throws Exception
      * @throws \Polaris\Http\Exception
      */
     public function testFormPostArray()
