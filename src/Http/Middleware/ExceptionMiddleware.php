@@ -3,6 +3,8 @@
 namespace Polaris\Http\Middleware;
 
 use Polaris\Http\Exception\HttpException;
+use Polaris\Http\Headers;
+use Polaris\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

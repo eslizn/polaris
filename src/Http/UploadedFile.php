@@ -68,64 +68,6 @@ class UploadedFile implements UploadedFileInterface
     protected bool $moved = false;
 
     /**
-     * Create a normalized tree of UploadedFile instances from the Environment.
-     *
-     * @param array $globals The global server variables.
-     *
-     * @return array|null A normalized tree of UploadedFile instances or null if none are provided.
-     */
-    public static function createFromGlobals(array $globals): ?array
-    {
-        return static::parseUploadedFiles($_FILES);
-    }
-
-    /**
-     * Parse a non-normalized, i.e. $_FILES superglobal, tree of uploaded file data.
-     *
-     * @param array $uploadedFiles The non-normalized tree of uploaded file data.
-     *
-     * @return array A normalized tree of UploadedFile instances.
-     */
-    public static function parseUploadedFiles(array $uploadedFiles): array
-    {
-        $parsed = [];
-        foreach ($uploadedFiles as $field => $uploadedFile) {
-            if (!isset($uploadedFile['error'])) {
-                if (is_array($uploadedFile)) {
-                    $parsed[$field] = static::parseUploadedFiles($uploadedFile);
-                }
-                continue;
-            }
-
-            $parsed[$field] = [];
-            if (!is_array($uploadedFile['error'])) {
-                $parsed[$field] = new static(
-                    $uploadedFile['tmp_name'],
-                    $uploadedFile['name'] ?? null,
-                    $uploadedFile['type'] ?? null,
-                    $uploadedFile['size'] ?? null,
-                    $uploadedFile['error'],
-                    true
-                );
-            } else {
-                $subArray = [];
-                foreach ($uploadedFile['error'] as $fileIdx => $error) {
-                    // normalise subarray and re-parse to move the input's keyname up a level
-                    $subArray[$fileIdx]['name'] = $uploadedFile['name'][$fileIdx];
-                    $subArray[$fileIdx]['type'] = $uploadedFile['type'][$fileIdx];
-                    $subArray[$fileIdx]['tmp_name'] = $uploadedFile['tmp_name'][$fileIdx];
-                    $subArray[$fileIdx]['error'] = $uploadedFile['error'][$fileIdx];
-                    $subArray[$fileIdx]['size'] = $uploadedFile['size'][$fileIdx];
-
-                    $parsed[$field] = static::parseUploadedFiles($subArray);
-                }
-            }
-        }
-
-        return $parsed;
-    }
-
-    /**
      * Construct a new UploadedFile instance.
      *
      * @param string $file The full path to the uploaded file provided by the client.

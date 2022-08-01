@@ -2,13 +2,14 @@
 
 namespace Polaris\Tests\Http;
 
+use Polaris\Http\Factory\UriFactory;
 use Polaris\Http\Uri;
 use Polaris\Tests\TestCase;
 
 /**
  *
  */
-class UriTest extends TestCase
+class UriFactoryTest extends TestCase
 {
 
     /**
@@ -17,7 +18,7 @@ class UriTest extends TestCase
     public function testWithoutHostAndScheme()
     {
         $str = '/path/index?a=1&b=2';
-        $uri = Uri::createFromString($str);
+        $uri = UriFactory::createFromString($str);
         $this->assertInstanceOf(Uri::class, $uri);
         $this->assertEquals($str, strval($uri));
     }

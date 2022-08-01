@@ -65,61 +65,6 @@ class Request extends Message implements ServerRequestInterface
     protected array $uploaded = [];
 
     /**
-     * Create new HTTP request with data extracted from Swoole Request
-     *
-     * @param \Swoole\Http\Request $request
-     * @return static
-     * @throws Exception
-     */
-    public static function createFromSwoole(\Swoole\Http\Request $request): self
-    {
-        if (empty($request) || !class_exists('\Swoole\Http\Request')) {
-            throw new Exception('invalid request object', -__LINE__);
-        }
-        $method = $request->server['request_method'] ?? 'GET';
-        $req = new static(
-            $method,
-            Uri::createFromSwoole($request),
-            Headers::createFromSwoole($request),
-            new Cookies($request->cookie ?: []),
-            array_change_key_case($request->server, CASE_UPPER),
-            new Body($request->rawContent()),
-            $request->files ? UploadedFile::parseUploadedFiles($request->files) : []
-        );
-        if ($request->post) {
-            $req = $req->withParsedBody($request->post);
-        }
-
-        return $req->withAttribute(\Swoole\Http\Request::class, $request);
-    }
-
-    /**
-     * Create new HTTP request with data extracted from the application
-     * Environment object
-     *
-     * @param array $globals The global server variables.
-     *
-     * @return static
-     * @throws Exception
-     */
-    public static function createFromGlobals(array $globals): self
-    {
-        $method = $globals['REQUEST_METHOD'] ?? null;
-        $uri = Uri::createFromGlobals($globals);
-        $headers = Headers::createFromGlobals($globals);
-        $cookies = Cookies::parse(current($headers->get('Cookie', [])));
-        $uploadedFiles = UploadedFile::parseUploadedFiles($_FILES);
-        $request = new static($method, $uri, $headers, $cookies, $globals, new Body(), $uploadedFiles);
-
-        if (is_array($_POST) && $_POST) {
-            $request = $request->withParsedBody($_POST);
-        } else if ($headers['Content-Length']) {
-            $request = $request->withBody(new Stream(STDIN));
-        }
-        return $request;
-    }
-
-    /**
      * @param string $method
      * @param UriInterface $uri
      * @param Headers|null $headers
