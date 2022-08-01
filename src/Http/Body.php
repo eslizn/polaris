@@ -34,10 +34,11 @@ class Body implements StreamInterface
      */
     protected bool $attached = false;
 
-    /**
-     * Stream constructor.
-     * @param mixed $data
-     */
+	/**
+	 * Stream constructor.
+	 * @param mixed $data
+	 * @throws Exception
+	 */
     public function __construct($data = null)
     {
         $this->attach($data);
