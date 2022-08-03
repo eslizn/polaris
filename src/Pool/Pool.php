@@ -48,7 +48,7 @@ class Pool extends \Swoole\Coroutine\Channel
     /**
      * @param mixed $data
      * @param float|null $timeout
-     * @return bool
+     * @return mixed
      * @throws Throwable
      */
     public function push($data, $timeout = null)
