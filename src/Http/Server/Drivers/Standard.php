@@ -79,7 +79,7 @@ class Standard implements ServerInterface
                 }
             }
         }
-        if ($response->getBody()->getSize()) {
+        if ($response->getBody() && $response->getBody()->getSize()) {
             if ($response instanceof Response\FileResponse) {
                 readfile($response->getBody()->getContents());
             } else {

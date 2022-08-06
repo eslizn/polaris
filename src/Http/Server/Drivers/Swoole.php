@@ -210,7 +210,7 @@ class Swoole implements ServerInterface
             if (!$response->getHeader('Server')) {
                 $writer->header('Server', 'Petrel');
             }
-            if ($response->getBody()->getSize()) {
+            if ($response->getBody() && $response->getBody()->getSize()) {
                 if ($response instanceof Response\FileResponse) {
                     $file = $response->getBody()->getContents();
                     $writer->sendfile($file);//sendfile will end
