@@ -37,6 +37,7 @@
     "psr/http-client": "^1",
     "psr/log": "^1",
     "php-http/httplug": "^2.3",
+    "nikic/fast-route": "^1",
     "ext-json": "*",
     "ext-sockets": "*",
     "ext-curl": "*"
