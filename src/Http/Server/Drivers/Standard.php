@@ -2,8 +2,8 @@
 
 namespace Polaris\Http\Server\Drivers;
 
-use Polaris\Events\BootstrapEvent;
 use Polaris\Http\Cookies;
+use Polaris\Http\Events\BootstrapEvent;
 use Polaris\Http\Events\RequestedEvent;
 use Polaris\Http\Events\RequestEvent;
 use Polaris\Http\Exception;
