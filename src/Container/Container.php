@@ -75,7 +75,7 @@ class Container implements ContainerInterface
      * @param mixed $id
      * @param mixed $value
      * @return static
-     * @throws Throwable
+     * @throws Exception
      */
     public function set($id, $value = null): self
     {

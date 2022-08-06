@@ -1,14 +1,13 @@
 <?php
 
-namespace Polaris\Event;
-
+namespace Polaris\Events;
 
 use Psr\Container\ContainerInterface;
 
 /**
  * AbstractEvent
  *
- * @package Polaris\Event
+ * @package Polaris\Events
  * @author eslizn <eslizn@gmail.com>
  */
 abstract class AbstractEvent
@@ -26,5 +25,13 @@ abstract class AbstractEvent
 	{
 		$this->container = $container;
 	}
+
+    /**
+     * @return ContainerInterface
+     */
+    public function getContainer(): ContainerInterface
+    {
+        return $this->container;
+    }
 
 }

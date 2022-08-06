@@ -3,6 +3,8 @@
 namespace Polaris\Tests;
 
 use Dotenv\Dotenv;
+use Polaris\Container\Container;
+use Polaris\Container\ContainerInterface;
 
 /**
  *
@@ -19,6 +21,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
     {
         Dotenv::createUnsafeImmutable(dirname(__DIR__))->safeLoad();
         parent::__construct($name, $data, $dataName);
+    }
+
+    /**
+     * @return ContainerInterface
+     */
+    public function getContainer(): ContainerInterface
+    {
+        return new Container();
     }
 
 }

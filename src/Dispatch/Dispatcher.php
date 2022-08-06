@@ -1,6 +1,6 @@
 <?php
 
-namespace Polaris\Event;
+namespace Polaris\Dispatch;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\EventDispatcher\ListenerProviderInterface;
