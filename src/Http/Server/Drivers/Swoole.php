@@ -208,7 +208,7 @@ class Swoole implements ServerInterface
                 }
             }
             if (!$response->getHeader('Server')) {
-                $writer->header('Server', 'Petrel');
+                $writer->header('Server', 'Polaris');
             }
             if ($response->getBody() && $response->getBody()->getSize()) {
                 if ($response instanceof Response\FileResponse) {
