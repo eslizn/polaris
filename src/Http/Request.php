@@ -309,7 +309,7 @@ class Request extends Message implements ServerRequestInterface
         }
 
         if (isset($this->parsers[$mediaType]) === true) {
-            $body = (string)$this->getBody();
+            $body = $this->getBody() ? $this->getBody()->getContents() : '';
             $parsed = $this->parsers[$mediaType]($body);
 
             if (!is_null($parsed) && !is_object($parsed) && !is_array($parsed)) {
