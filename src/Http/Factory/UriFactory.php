@@ -103,7 +103,7 @@ class UriFactory implements UriFactoryInterface
 		// Fragment
 		$fragment = '';
 
-		return new Uri($scheme, $host ?: '', $port, $path, $query, $fragment, $username, $password);
+		return new Uri($scheme, $host ?: '', $port, $path, $query ?: '', $fragment, $username, $password);
 	}
 
 }
