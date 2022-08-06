@@ -9,6 +9,7 @@ use Polaris\Http\Events\RequestEvent;
 use Polaris\Http\Exception;
 use Polaris\Http\Factory\RequestFactory;
 use Polaris\Http\Server\ServerInterface;
+use Polaris\Http\Response;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -78,13 +79,13 @@ class Standard implements ServerInterface
                 }
             }
         }
-//        if ($response->getBody()->getSize()) {
-//            if ($response instanceof Response\FileResponse) {
-//                readfile($response->getBody()->getContents());
-//            } else {
-//                echo $response->getBody()->getContents();
-//            }
-//        }
+        if ($response->getBody()->getSize()) {
+            if ($response instanceof Response\FileResponse) {
+                readfile($response->getBody()->getContents());
+            } else {
+                echo $response->getBody()->getContents();
+            }
+        }
     }
 
 }

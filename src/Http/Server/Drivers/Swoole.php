@@ -17,6 +17,7 @@ use Polaris\Http\Events\WorkerExitEvent;
 use Polaris\Http\Events\WorkerStartedEvent;
 use Polaris\Http\Events\WorkerStoppedEvent;
 use Polaris\Http\Factory\RequestFactory;
+use Polaris\Http\Response;
 use Polaris\Http\Server\ServerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -24,8 +25,6 @@ use Psr\Container\NotFoundExceptionInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Swoole\Http\Request;
-use Swoole\Http\Response;
 use Swoole\Server;
 use Swoole\Server\Task;
 use Throwable;
@@ -163,8 +162,8 @@ class Swoole implements ServerInterface
     }
 
     /**
-     * @param Request $reader
-     * @param Response $writer
+     * @param \Swoole\Http\Request $reader
+     * @param \Swoole\Http\Response $writer
      * @throws \Polaris\Exception
      */
     public function onRequest(\Swoole\Http\Request $reader, \Swoole\Http\Response $writer)
@@ -191,35 +190,43 @@ class Swoole implements ServerInterface
      * @param ResponseInterface $response
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     * @throws Throwable
      */
     protected function terminate(ContainerInterface $container, ServerRequestInterface $request, ResponseInterface $response)
     {
-        $writer = $container->get(\Swoole\Http\Response::class);
-        $writer->status($response->getStatusCode());
-        foreach ($response->getHeaders() as $name => $headers) {
-            if (strcasecmp($name, 'Set-Cookie')) {
-                $writer->header($name, implode(', ', $headers));
-            } else {
-                $cookie = Cookies::parse(implode('; ', $headers));
-                foreach ($cookie->cookies ?: [] as $key => $value) {
-                    $writer->cookie($key, $value, $cookie->expires ?: null, $cookie->path ?: '/', $cookie->domain ?: '', $cookie->secure ?: false, $cookie->httponly ?: false);
+        try {
+            $writer = $container->get(\Swoole\Http\Response::class);
+            $writer->status($response->getStatusCode());
+            foreach ($response->getHeaders() as $name => $headers) {
+                if (strcasecmp($name, 'Set-Cookie')) {
+                    $writer->header($name, implode(', ', $headers));
+                } else {
+                    $cookie = Cookies::parse(implode('; ', $headers));
+                    foreach ($cookie->cookies ?: [] as $key => $value) {
+                        $writer->cookie($key, $value, $cookie->expires ?: null, $cookie->path ?: '/', $cookie->domain ?: '', $cookie->secure ?: false, $cookie->httponly ?: false);
+                    }
                 }
             }
+            if (!$response->getHeader('Server')) {
+                $writer->header('Server', 'Petrel');
+            }
+            if ($response->getBody()->getSize()) {
+                if ($response instanceof Response\FileResponse) {
+                    $file = $response->getBody()->getContents();
+                    $writer->sendfile($file);//sendfile will end
+                } else {
+                    $writer->write($response->getBody()->getContents());
+                    $writer->end();
+                }
+            } else {
+                $writer->end();
+            }
+        } catch (Throwable $e) {
+            if (isset($writer)) {
+                $writer->end();
+            }
+            throw $e;
         }
-        if (!$response->getHeader('Server')) {
-            $writer->header('Server', 'Petrel');
-        }
-//            if ($response->getBody()->getSize()) {
-//                if ($response instanceof Response\FileResponse) {
-//                    $file = $response->getBody()->getContents();
-//                    $writer->sendfile($file);//sendfile will end
-//                } else {
-//                    $writer->write($response->getBody()->getContents());
-//                    $writer->end();
-//                }
-//            } else {
-//                $writer->end();
-//            }
     }
 
 }
