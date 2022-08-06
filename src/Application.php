@@ -35,9 +35,10 @@ class Application extends Dispatcher
         if (is_null($path)) {
             $path = dirname(__DIR__, 5);
         }
-        $this->config = new Config($path);
+        $this->config = new Config($path . DIRECTORY_SEPARATOR . 'config');
         $this->config->set('app.path', $path);
         $this->container = new Container();
+        $this->container->set($this->container);
         $this->container->set($this->config);
         $this->container->set($this);
     }

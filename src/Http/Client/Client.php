@@ -92,7 +92,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
 
     /**
      *
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     private function handleSwoole(RequestInterface $request): Response
     {
@@ -115,6 +115,8 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
                 $pool = Manager::get($name);
             }
             $client = $pool ? $pool->pop() : $factory();
+        } catch (\Polaris\Exception $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new Exception($request, $e->getMessage(), $e->getCode(), $e);
         }
@@ -177,7 +179,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
                 }
             }
             return new Response($client->statusCode, new Headers($client->headers), new Body($client->body));
-        } catch (Exception $e) {
+        } catch (\Polaris\Exception $e) {
             throw $e;
         } catch (Throwable $e) {
             throw new Exception($request, $e->getMessage(), $e->getCode(), $e);
@@ -197,7 +199,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
     }
 
     /**
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     private function handleCurl(RequestInterface $request): Response
     {
@@ -267,7 +269,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
                 $headers[trim(substr($head, 0, $position))] = trim(substr($head, $position+1));
             }
             return new Response(curl_getinfo($handle, CURLINFO_HTTP_CODE), new Headers($headers), new Body($body));
-        } catch (Exception $e) {
+        } catch (\Polaris\Exception $e) {
             throw $e;
         } catch (Throwable $e) {
             throw new Exception($request, $e->getMessage(), $e->getCode(), $e);

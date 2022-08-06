@@ -53,7 +53,7 @@ class Swoole implements ServerInterface
 
     /**
      * @param ContainerInterface $container
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     public function __construct(ContainerInterface $container)
     {
@@ -61,6 +61,8 @@ class Swoole implements ServerInterface
             $this->container = $container;
             $this->dispatcher = $container->get(EventDispatcherInterface::class);
             $this->config = $container->get(ConfigInterface::class);
+        } catch (\Polaris\Exception $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -163,21 +165,24 @@ class Swoole implements ServerInterface
     /**
      * @param Request $reader
      * @param Response $writer
-     * @throws ContainerExceptionInterface
-     * @throws Exception
-     * @throws NotFoundExceptionInterface
-     * @throws \Polaris\Container\Exception
+     * @throws \Polaris\Exception
      */
     public function onRequest(\Swoole\Http\Request $reader, \Swoole\Http\Response $writer)
     {
-        $container = new Container();
-        $container->addResolver($this->container)->set($reader)->set($writer);
-        $container->set(RequestFactory::createFromSwoole($reader));
-        $requestEvent = new RequestEvent($container);
-        $this->dispatcher->dispatch($requestEvent);
-        $requestedEvent = new RequestedEvent($container);
-        $this->terminate($container, $requestEvent->getRequest(), $requestedEvent->getResponse());
-        $this->dispatcher->dispatch($requestedEvent);
+        try {
+            $container = new Container();
+            $container->addResolver($this->container)->set($reader)->set($writer);
+            $container->set(RequestFactory::createFromSwoole($reader));
+            $requestEvent = new RequestEvent($container);
+            $this->dispatcher->dispatch($requestEvent);
+            $requestedEvent = new RequestedEvent($container);
+            $this->terminate($container, $requestEvent->getRequest(), $requestedEvent->getResponse());
+            $this->dispatcher->dispatch($requestedEvent);
+        } catch (\Polaris\Exception $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**

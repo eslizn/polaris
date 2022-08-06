@@ -3,6 +3,7 @@
 namespace Polaris\Http\Exception;
 
 use Polaris\Http\Exception;
+use Polaris\Http\Response;
 
 /**
  *

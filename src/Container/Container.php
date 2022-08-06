@@ -75,7 +75,7 @@ class Container implements ContainerInterface
      * @param mixed $id
      * @param mixed $value
      * @return static
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     public function set($id, $value = null): self
     {
@@ -97,7 +97,7 @@ class Container implements ContainerInterface
     /**
      * @param string $id
      * @return mixed
-     * @throws Throwable
+     * @throws \Polaris\Exception
      */
     public function get(string $id)
     {
@@ -113,12 +113,18 @@ class Container implements ContainerInterface
         if (isset($this->abstracts[$id])) {
             return $this->abstracts[$id];
         }
-        foreach ($this->resolvers as $resolver) {
-            if ($resolver->has($id)) {
-                return $resolver->get($id);
+        try {
+            foreach ($this->resolvers as $resolver) {
+                if ($resolver->has($id)) {
+                    return $resolver->get($id);
+                }
             }
+            throw new Exception(sprintf('"%s" not found', $id), -__LINE__);
+        } catch (\Polaris\Exception $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
-        throw new Exception(sprintf('"%s" not found', $id), -__LINE__);
     }
 
     /**
@@ -144,7 +150,7 @@ class Container implements ContainerInterface
     /**
      * @param ReflectionFunctionAbstract $closure
      * @return array
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     protected function resolveFunctionParameters(ReflectionFunctionAbstract $closure): array
     {
@@ -159,6 +165,8 @@ class Container implements ContainerInterface
                 }
             }
             return $parameters;
+        } catch (\Polaris\Exception $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -168,7 +176,7 @@ class Container implements ContainerInterface
      *
      * @param callable $factory
      * @return mixed
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     public function invoke($factory)
     {
@@ -190,7 +198,7 @@ class Container implements ContainerInterface
                 $reflect = new ReflectionFunction($factory);
                 return $reflect->invokeArgs($this->resolveFunctionParameters($reflect));
             }
-        } catch (Exception $e) {
+        } catch (\Polaris\Exception $e) {
             throw $e;
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
@@ -200,7 +208,7 @@ class Container implements ContainerInterface
     /**
      * @param string $class
      * @return object|null
-     * @throws Exception
+     * @throws \Polaris\Exception
      */
     public function make(string $class): ?object
     {
@@ -210,6 +218,8 @@ class Container implements ContainerInterface
                 $this->resolveFunctionParameters($reflect->getConstructor()) :
                 []
             );
+        } catch (\Polaris\Exception $e) {
+            throw $e;
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
