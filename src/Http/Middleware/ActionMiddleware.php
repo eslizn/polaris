@@ -4,10 +4,10 @@ namespace Polaris\Http\Middleware;
 
 use JsonSerializable;
 use Polaris\Config\ConfigInterface;
-use Polaris\Container\ContainerInterface;
 use Polaris\Http\Exception;
 use Polaris\Http\Response;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
