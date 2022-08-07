@@ -30,26 +30,31 @@ class Pool extends \Swoole\Coroutine\Channel
      */
     protected $destruct = null;
 
-    /**
-     * @param callable $factory
-     * @param int $size
-     * @param float $timeout
-     * @param callable|null $destruct
-     */
+	/**
+	 * @param callable $factory
+	 * @param int $size
+	 * @param float $timeout
+	 * @param callable|null $destruct
+	 * @throws Exception
+	 */
     public function __construct(callable $factory, int $size = 32, float $timeout = 0.1, ?callable $destruct = null)
     {
         $this->factory = $factory;
         $this->idle = $size;
         $this->timeout = $timeout;
         $this->destruct = $destruct;
-        parent::__construct($size);
+		try {
+			parent::__construct($size);
+		} catch (Throwable $e) {
+			throw new Exception($e->getMessage(), $e->getCode(), $e);
+		}
     }
 
     /**
      * @param mixed $data
      * @param float|null $timeout
      * @return mixed
-     * @throws Throwable
+     * @throws \Polaris\Exception
      */
     public function push($data, $timeout = null)
     {
@@ -58,55 +63,70 @@ class Pool extends \Swoole\Coroutine\Channel
         }
         if (is_null($data)) {
             try {
-                $data = ($this->factory)();
+				$data = ($this->factory)();
+				return parent::push($data, $timeout ?: $this->timeout);
+			} catch (\Polaris\Exception $e){
+				$this->idle--;
+				throw $e;
             } catch (Throwable $e) {
                 $this->idle--;
-                throw $e;
+				throw new Exception($e->getMessage(), $e->getCode(), $e);
             }
         }
-        return parent::push($data, $timeout ?: $this->timeout);
     }
 
     /**
      * @param float|null $timeout
      * @return mixed
-     * @throws Throwable
+     * @throws \Polaris\Exception
      */
     public function pop($timeout = null)
     {
-        if (is_null($this->idle)) {
-            return false;
-        }
-        if ($this->isEmpty() && $this->idle > 0) {
-            $this->idle--;
-            $this->push(null, $timeout ?: $this->timeout);
-        }
-        return parent::pop($timeout ?: $this->timeout);
+        try {
+			if (is_null($this->idle)) {
+				return false;
+			}
+			if ($this->isEmpty() && $this->idle > 0) {
+				$this->idle--;
+				$this->push(null, $timeout ?: $this->timeout);
+			}
+			return parent::pop($timeout ?: $this->timeout);
+		} catch (\Polaris\Exception $e){
+			throw $e;
+		} catch (Throwable $e) {
+			throw new Exception($e->getMessage(), $e->getCode(), $e);
+		}
     }
 
     /**
      * @return bool
-     * @throws Throwable
+     * @throws \Polaris\Exception
      */
     public function close(): bool
     {
         if (is_null($this->idle)) {
             return true;
         }
-        $this->idle = 0;
-        while (!$this->isEmpty()) {
-            if (is_null($this->destruct)) {
-                $this->pop($this->timeout);
-            } else {
-                ($this->destruct)($this->pop($this->timeout));
-            }
-        }
-        $this->idle = null;
-        return parent::close();
+		try {
+			$this->idle = 0;
+			while (!$this->isEmpty()) {
+				if (is_null($this->destruct)) {
+					$this->pop($this->timeout);
+				} else {
+					($this->destruct)($this->pop($this->timeout));
+				}
+			}
+			$this->idle = null;
+			return parent::close();
+		} catch (\Polaris\Exception $e){
+			throw $e;
+		} catch (Throwable $e) {
+			throw new Exception($e->getMessage(), $e->getCode(), $e);
+		}
     }
 
     /**
-     * @throws Throwable
+     * @throws \Polaris\Exception
      */
     public function __destruct()
     {
