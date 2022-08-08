@@ -144,7 +144,7 @@ class Dao extends Connection
      * @param ContainerInterface|null $container
      * @throws \Polaris\Exception
      */
-    public function __construct(string $table, ContainerInterface $container = null)
+    public function __construct(string $table, ?ContainerInterface $container = null)
     {
         parent::__construct($container);
         $this->table($table);

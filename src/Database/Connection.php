@@ -56,7 +56,7 @@ class Connection implements LoggerAwareInterface
 	 * @param ContainerInterface|null $container
 	 * @throws \Polaris\Exception
 	 */
-	public function __construct(ContainerInterface $container = null)
+	public function __construct(?ContainerInterface $container = null)
 	{
 		$this->container = $container;
 		try {
