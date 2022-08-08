@@ -2,6 +2,7 @@
 
 namespace Polaris\Http\Response;
 
+use Polaris\Http\Body;
 use Polaris\Http\Exception\HttpException;
 use Polaris\Http\Response;
 
@@ -32,7 +33,7 @@ class FileResponse extends Response
         if (!file_exists($path)) {
             throw new HttpException(404);
         }
-        parent::__construct($status, $headers, $path);
+        parent::__construct($status, $headers, new Body($path));
         $suffix = trim(strrchr($path, '.'), '.');
         if (isset($this->types[$suffix])) {
             $this->headers['Content-Type'] = $this->types[$suffix];
