@@ -342,7 +342,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
      */
     public function offsetExists($offset): bool
     {
-        return isset($this->options[$offset]);
+        return $this->config->has(sprintf('http.client.%s', $offset));
     }
 
     /**
@@ -351,7 +351,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
      */
     public function offsetGet($offset)
     {
-        return $this->options[$offset] ?? null;
+        return $this->config->get(sprintf('http.client.%s', $offset));
     }
 
     /**
@@ -361,7 +361,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
      */
     public function offsetSet($offset, $value)
     {
-        $this->options[$offset] = $value;
+		$this->config->set(sprintf('http.client.%s', $offset), $value);
     }
 
     /**
@@ -370,7 +370,7 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
      */
     public function offsetUnset($offset)
     {
-        unset($this->options[$offset]);
+		$this->config->del(sprintf('http.client.%s', $offset));
     }
 
 }
