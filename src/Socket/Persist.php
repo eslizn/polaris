@@ -3,7 +3,6 @@
 namespace Polaris\Socket;
 
 use Polaris\Pool\Manager;
-use Polaris\Pool\Pool;
 
 /**
  *
@@ -32,13 +31,14 @@ final class Persist extends Socket
 	protected array $options = [];
 
 	/**
-	 * @param mixed $resource
+	 * @param resource $resource
 	 * @param array $options
 	 */
 	public function __construct($resource = null, array $options = [])
 	{
-		$this->options = $options;
-		parent::__construct($resource);
+		parent::__construct($resource, array_merge([
+			'size' => 32,
+		], $options));
 	}
 
 	/**
@@ -66,7 +66,7 @@ final class Persist extends Socket
 	 */
 	public function setTimeout($timeout): self
 	{
-		$this->timeout = $timeout;
+		$this->options['timeout'] = $timeout;
 		return $this;
 	}
 
@@ -134,10 +134,17 @@ final class Persist extends Socket
 				$protocol = $this->protocol;
 				$pool = Manager::create($this->getName(), function () use ($domain, $type, $protocol) {
 					return new \Swoole\Coroutine\Socket($domain, $type, $protocol);
-				}, $this->options['size'] ?? 32);
+				}, $this->options['size'], 0.1, function ($resource) {
+					/**
+					 * @var \Swoole\Coroutine\Socket $resource
+					 */
+					$resource->close();
+				});
 			}
 			return $this->resource = $pool->pop();
-		} catch (\Polaris\Pool\Exception $e) {
+		} catch (\Polaris\Exception $e) {
+			throw $e;
+		} catch (\Throwable $e) {
 			throw new Exception($this, $e->getMessage(), $e->getCode(), $e);
 		}
 	}
@@ -168,5 +175,7 @@ final class Persist extends Socket
 		return (new self(null, $options))
 			->create(...self::$schemes[$scheme]);
 	}
+
+
 
 }

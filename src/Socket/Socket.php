@@ -58,17 +58,22 @@ class Socket
 	protected $resource;
 
 	/**
-	 * @var float
+	 * @var array
 	 */
-	protected $timeout = 3;
+	protected array $options = [];
 
 	/**
 	 * Socket constructor.
+	 *
 	 * @param mixed $resource
+	 * @param array $options
 	 */
-	public function __construct($resource = null)
+	public function __construct($resource = null, array $options = [])
 	{
 		$this->resource = $resource;
+		$this->options = array_merge([
+			'timeout' => 3,
+		], $options);
 	}
 
 	/**
@@ -147,7 +152,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			$resource = $socket->accept($this->timeout);
+			$resource = $socket->accept($this->options['timeout']);
 			if (!$resource) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
@@ -170,7 +175,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			if (!$socket->connect($host, $port, $this->timeout)) {
+			if (!$socket->connect($host, $port, $this->options['timeout'])) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
 		} else {
@@ -191,7 +196,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			$buffer = $socket->recv($length, $this->timeout);
+			$buffer = $socket->recv($length, $this->options['timeout']);
 			if ($buffer === false) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
@@ -214,7 +219,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			$buffer = $socket->recvAll($length, $this->timeout);
+			$buffer = $socket->recvAll($length, $this->options['timeout']);
 			if ($buffer === false) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
@@ -239,7 +244,7 @@ class Socket
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
 			$peer = [];
-			$buffer = $socket->recvFrom($peer, $this->timeout)->recvfrom();
+			$buffer = $socket->recvFrom($peer, $this->options['timeout'])->recvfrom();
 			$host = $peer['address'] ?? null;
 			$port = $peer['port'] ?? 0;
 			if ($buffer === false) {
@@ -262,7 +267,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			$result = $socket->send($buffer, $this->timeout);
+			$result = $socket->send($buffer, $this->options['timeout']);
 			if ($result === false) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
@@ -285,7 +290,7 @@ class Socket
 	{
 		$socket = $this->getResource();
 		if ($this->isCoroutine()) {
-			$result = $socket->sendAll($buffer, $this->timeout);
+			$result = $socket->sendAll($buffer, $this->options['timeout']);
 			if ($result === false) {
 				throw Exception::createFromCode($socket->errCode, $this);
 			}
@@ -357,7 +362,7 @@ class Socket
 				'usec' => is_null($timeout) ? null : ($timeout * 1000000 % 1000000),
 			];
 		}
-		$this->timeout = $timeout['sec'] ?? 0 + ($timeout['usec'] ?? 0) / 1000000;
+		$this->options['timeout'] = $timeout['sec'] ?? 0 + ($timeout['usec'] ?? 0) / 1000000;
 		return $this->setOption(SOL_SOCKET, SO_RCVTIMEO, $timeout)
 			->setOption(SOL_SOCKET, SO_SNDTIMEO, $timeout);
 	}
@@ -443,10 +448,10 @@ class Socket
 	 */
 	public static function createSocket(string $scheme, array $options = []): self
 	{
-		if (!isset(static::$schemes[$scheme])) {
+		if (!isset(self::$schemes[$scheme])) {
 			throw Exception::createFromCode(SOCKET_ESOCKTNOSUPPORT);
 		}
-		return (new static())->create(...static::$schemes[$scheme]);
+		return (new self())->create(...self::$schemes[$scheme]);
 	}
 
 }

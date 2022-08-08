@@ -6,6 +6,8 @@ use Polaris\Socket\Exception\BrokenPipeException;
 use Polaris\Socket\Exception\TimeoutException;
 use Throwable;
 
+defined('SOCKET_EAGAIN') or define('SOCKET_EAGAIN', 11);
+
 /**
  *
  */
