@@ -4,6 +4,8 @@ namespace Polaris\Database;
 
 use PDO;
 use PDOStatement;
+use Polaris\Config\Config;
+use Polaris\Config\ConfigInterface;
 use Polaris\Pool\Manager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -36,6 +38,11 @@ class Connection implements LoggerAwareInterface
 	protected ?ContainerInterface $container;
 
 	/**
+	 * @var ConfigInterface|null
+	 */
+	protected ?ConfigInterface $config;
+
+	/**
 	 * @var PDO|null
 	 */
 	protected ?PDO $connection = null;
@@ -49,11 +56,15 @@ class Connection implements LoggerAwareInterface
 	 * @param ContainerInterface|null $container
 	 * @throws \Psr\Container\ContainerExceptionInterface
 	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @throws \Polaris\Exception
 	 */
 	public function __construct(ContainerInterface $container = null)
 	{
 		$this->container = $container;
-		$this->setLogger($container && $container->has(LoggerInterface::class) ? $container->get(LoggerInterface::class) : new NullLogger());
+		$this->config = $container && $container->has(ConfigInterface::class) ?
+			$container->get(ConfigInterface::class) : new Config(dirname(__DIR__, 6));
+		$this->setLogger($container && $container->has(LoggerInterface::class) ?
+			$container->get(LoggerInterface::class) : new NullLogger());
 	}
 
 	/**
@@ -94,7 +105,7 @@ class Connection implements LoggerAwareInterface
 				if (!$pool) {
 					$pool = Manager::create($identity, function () use ($args) {
 						return new PDO(...$args);
-					}, $this->options ?? []);
+					}, $this->config->get('database.size', 32));
 				}
 				$this->connection = $pool->pop();
 			} else {

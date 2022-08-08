@@ -7,6 +7,8 @@ use Http\Client\HttpAsyncClient;
 use Http\Client\HttpClient;
 use Http\Client\Promise\HttpFulfilledPromise;
 use Http\Client\Promise\HttpRejectedPromise;
+use Polaris\Config\Config;
+use Polaris\Config\ConfigInterface;
 use Polaris\Http\Body;
 use Polaris\Http\Client\Exception\TimeoutException;
 use Polaris\Http\Headers;
@@ -37,24 +39,25 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
      */
     protected ?ContainerInterface $container = null;
 
-    /**
-     * @var array
-     */
-    protected array $options = [];
+	/**
+	 * @var ConfigInterface|null
+	 */
+	protected ?ConfigInterface $config;
 
     /**
      * @param ContainerInterface|null $container
      * @throws Exception
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+	 * @throws \Polaris\Exception
      */
     public function __construct(?ContainerInterface $container = null)
     {
         $this->container = $container;
-        $this->options = [
-            'timeout' => 3,
-            'proxy' => $this->getDefaultProxy(),
-        ];
+		$this->config = $container && $container->has(ConfigInterface::class) ?
+			$container->get(ConfigInterface::class) : new Config(dirname(__DIR__, 7));
+		$this->config->set('http.client.timeout', 3);
+		$this->config->set('http.client.proxy', $this->getDefaultProxy());
         $this->setLogger($container && $container->has(LoggerInterface::class) ?
             $container->get(LoggerInterface::class) : new NullLogger());
     }
@@ -120,15 +123,15 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
         } catch (Throwable $e) {
             throw new Exception($request, $e->getMessage(), $e->getCode(), $e);
         }
-        $options = $this->options;
-        if ($this->options['proxy']) {
-            $options['http_proxy_host'] = $this->options['proxy']['host'];
-            $options['http_proxy_port'] = $this->options['proxy']['port'];
-            if ($this->options['proxy']['user']) {
-                $options['http_proxy_user'] = $this->options['proxy']['user'];
+        $options = $this->config->get('http.client');
+        if ($this->config->has('http.client.proxy')) {
+            $options['http_proxy_host'] = $this->config->get('http.client.proxy.host');
+            $options['http_proxy_port'] = $this->config->get('http.client.proxy.port');
+            if ($this->config->has('http.client.proxy.user')) {
+                $options['http_proxy_user'] = $this->config->get('http.client.proxy.user');
             }
-            if ($this->options['proxy']['pass']) {
-                $options['http_proxy_password'] = $this->options['proxy']['pass'];
+            if ($this->config->has('http.client.proxy.pass')) {
+                $options['http_proxy_password'] = $this->config->get('http.client.proxy.pass');
             }
         }
         $client->set(array_only($options, [
@@ -219,18 +222,22 @@ class Client implements LoggerAwareInterface, HttpAsyncClient, HttpClient, \Arra
             curl_setopt($handle, CURLOPT_HEADER, true);
             curl_setopt($handle, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, false);//@todo
-            if ($this->options['proxy']) {
-                curl_setopt($handle, CURLOPT_PROXY, $this->options['proxy']['host']);
-                curl_setopt($handle, CURLOPT_PROXYPORT, $this->options['proxy']['port']);
-                if ($this->options['proxy']['user']) {
-                    curl_setopt($handle, CURLOPT_PROXYUSERPWD, $this->options['proxy']['user'] . ':' . $this->options['proxy']['pass']);
+            if ($this->config->has('http.client.proxy')) {
+                curl_setopt($handle, CURLOPT_PROXY, $this->config->get('http.client.proxy.host'));
+                curl_setopt($handle, CURLOPT_PROXYPORT, $this->config->get('http.client.proxy.port'));
+                if ($this->config->has('http.client.proxy.user')) {
+					$auth = $this->config->get('http.client.proxy.user');
+					if ($this->config->has('http.client.proxy.pass')) {
+						$auth .= ':' . $this->config->get('http.client.proxy.pass');
+					}
+                    curl_setopt($handle, CURLOPT_PROXYUSERPWD, $auth);
                 }
                 curl_setopt($handle, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
             }
 
-            if (isset($this->options['timeout'])) {
-                curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, intval($this->options['timeout']));
-                curl_setopt($handle, CURLOPT_TIMEOUT, intval($this->options['timeout']));
+            if ($this->config->has('http.client.timeout')) {
+                curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, intval($this->config->get('http.client.timeout')));
+                curl_setopt($handle, CURLOPT_TIMEOUT, intval($this->config->get('http.client.timeout')));
             }
             if ($request->getUploadedFiles()) {
                 parse_str($body ? $body->getContents() : '', $body);
