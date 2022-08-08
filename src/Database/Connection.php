@@ -54,17 +54,21 @@ class Connection implements LoggerAwareInterface
 
 	/**
 	 * @param ContainerInterface|null $container
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 * @throws \Polaris\Exception
 	 */
 	public function __construct(ContainerInterface $container = null)
 	{
 		$this->container = $container;
-		$this->config = $container && $container->has(ConfigInterface::class) ?
-			$container->get(ConfigInterface::class) : new Config(dirname(__DIR__, 6));
-		$this->setLogger($container && $container->has(LoggerInterface::class) ?
-			$container->get(LoggerInterface::class) : new NullLogger());
+		try {
+            $this->config = $container && $container->has(ConfigInterface::class) ?
+                $container->get(ConfigInterface::class) : new Config(dirname(__DIR__, 6));
+            $this->setLogger($container && $container->has(LoggerInterface::class) ?
+                $container->get(LoggerInterface::class) : new NullLogger());
+        } catch (\Polaris\Exception $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
 	}
 
 	/**
