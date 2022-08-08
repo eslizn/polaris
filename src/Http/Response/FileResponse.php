@@ -3,6 +3,7 @@
 namespace Polaris\Http\Response;
 
 use Polaris\Http\Body;
+use Polaris\Http\Exception;
 use Polaris\Http\Exception\HttpException;
 use Polaris\Http\Response;
 
@@ -26,11 +27,11 @@ class FileResponse extends Response
      * @param string $path
      * @param int $status
      * @param null $headers
-     * @throws HttpException
+     * @throws Exception
      */
     public function __construct($path, $status = 200, $headers = null)
     {
-        if (!file_exists($path)) {
+        if ($path != realpath($path) || !file_exists($path)) {
             throw new HttpException(404);
         }
         parent::__construct($status, $headers, new Body($path));
