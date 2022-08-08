@@ -30,7 +30,7 @@ class ExceptionMiddleware implements MiddlewareInterface
         } catch (HttpException $e) {
             return new Response\PlainResponse($e->getStatusText(), $e->getStatusCode());
         } catch (Throwable $e) {
-            return new Response\PlainResponse($e->getTraceAsString(), 500);
+            return new Response\PlainResponse(strval($e), 500);
         }
     }
 }
